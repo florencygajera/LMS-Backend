@@ -88,14 +88,14 @@ pytest-mock==3.11.1
 # OPTIONAL - Install separately if needed
 # =====================
 # PDF Generation (may need Pillow on Windows):
- pip install reportlab==4.0.7
+# pip install reportlab==4.0.7
 
 # OCR (requires system dependencies):
- pip install opencv-python-headless
-#pip install pytesseract
+# pip install opencv-python-headless
+# pip install pytesseract
 
 # AWS S3:
- pip install boto3
+# pip install boto3
 
 # ML:
- pip install scikit-learn numpy joblib
+# pip install scikit-learn numpy joblib
