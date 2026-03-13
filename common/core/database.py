@@ -41,6 +41,14 @@ class TimestampMixin:
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+def import_models() -> None:
+    """Import SQLAlchemy models so they are registered in Base metadata."""
+    # Importing model modules ensures Base.metadata knows all tables before create_all.
+    from services.auth_service.models import user as _auth_models  # noqa: F401
+    from services.recruitment_service.models import recruitment as _recruitment_models  # noqa: F401
+    from services.soldier_service.models import soldier as _soldier_models  # noqa: F401
+
+
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency for getting database session"""
     async with AsyncSessionLocal() as session:
@@ -56,11 +64,13 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db():
     """Initialize database tables"""
+    import_models()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
 async def drop_db():
     """Drop all database tables"""
+    import_models()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
