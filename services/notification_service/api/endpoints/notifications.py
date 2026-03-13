@@ -6,7 +6,7 @@ Agniveer Sentinel - Soldier Management LMS
 from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from typing import Optional
 from datetime import datetime
 
