@@ -427,3 +427,138 @@ async def list_equipment(
 
 # ==================== Events Endpoints ====================
 
+@router.get("/events", response_model=list[SoldierEventResponse])
+async def list_events(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """List soldier events and achievements"""
+    result = await db.execute(select(Soldier).where(Soldier.user_id == current_user.id))
+    soldier = result.scalar_one_or_none()
+    
+    if not soldier:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Soldier profile not found"
+        )
+    
+    result = await db.execute(
+        select(SoldierEvent).where(SoldierEvent.soldier_id == soldier.id)
+        .order_by(desc(SoldierEvent.event_date))
+    )
+    
+    return result.scalars().all()
+
+
+# ==================== Stipend Endpoints ====================
+
+@router.get("/stipends", response_model=list[StipendResponse])
+async def list_stipends(
+    current_user: User = Depends(get_current_user),
+    year: Optional[int] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """List soldier stipends"""
+    result = await db.execute(select(Soldier).where(Soldier.user_id == current_user.id))
+    soldier = result.scalar_one_or_none()
+    
+    if not soldier:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Soldier profile not found"
+        )
+    
+    query = select(Stipend).where(Stipend.soldier_id == soldier.id)
+    
+    if year:
+        query = query.where(Stipend.year == year)
+    
+    result = await db.execute(query.order_by(desc(Stipend.year), desc(Stipend.month)))
+    
+    return result.scalars().all()
+
+
+# ==================== Ranking Endpoints ====================
+
+@router.get("/rankings", response_model=list[PerformanceRankingResponse])
+async def get_rankings(
+    battalion_id: Optional[int] = None,
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get performance rankings"""
+    query = select(PerformanceRanking)
+    
+    if battalion_id:
+        query = query.where(PerformanceRanking.battalion_id == battalion_id)
+    if month:
+        query = query.where(PerformanceRanking.month == month)
+    if year:
+        query = query.where(PerformanceRanking.year == year)
+    
+    result = await db.execute(query.order_by(PerformanceRanking.rank))
+    
+    return result.scalars().all()
+
+
+# ==================== SOS Alert Endpoints ====================
+
+@router.post("/sos", response_model=SOSAlertResponse, status_code=status.HTTP_201_CREATED)
+async def trigger_sos(
+    sos_data: SOSAlertCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Trigger SOS alert (Admin)"""
+    sos = SOSAlert(
+        alert_message=sos_data.alert_message,
+        alert_type=sos_data.alert_message,
+        battalion_id=sos_data.battalion_id,
+        triggered_by=current_user.id,
+    )
+    
+    db.add(sos)
+    await db.commit()
+    await db.refresh(sos)
+    
+    # Would trigger WebSocket notifications here
+    
+    return sos
+
+
+@router.get("/sos/active", response_model=List[SOSAlertResponse])
+async def get_active_sos(
+    db: AsyncSession = Depends(get_db)
+):
+    """Get active SOS alerts"""
+    result = await db.execute(
+        select(SOSAlert).where(SOSAlert.is_active == True)
+        .order_by(desc(SOSAlert.triggered_at))
+    )
+    
+    return result.scalars().all()
+
+
+@router.post("/sos/{sos_id}/resolve")
+async def resolve_sos(
+    sos_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Resolve SOS alert"""
+    result = await db.execute(select(SOSAlert).where(SOSAlert.id == sos_id))
+    sos = result.scalar_one_or_none()
+    
+    if not sos:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="SOS alert not found"
+        )
+    
+    sos.is_active = False
+    sos.resolved_at = datetime.utcnow()
+    
+    await db.commit()
+    
+    return {"message": "SOS resolved successfully"}
