@@ -1,0 +1,100 @@
+"""
+Common Configuration Module
+Agniveer Sentinel - Military Training Platform
+"""
+
+from pydantic_settings import BaseSettings
+from functools import lru_cache
+from typing import Optional
+import os
+
+
+class Settings(BaseSettings):
+    """Application Settings"""
+    
+    # App Configuration
+    APP_NAME: str = "Agniveer Sentinel"
+    APP_VERSION: str = "1.0.0"
+    DEBUG: bool = True
+    API_V1_PREFIX: str = "/api/v1"
+    
+    # Security
+    SECRET_KEY: str = "your-secret-key-change-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    
+    # Database
+    POSTGRES_HOST: str = "localhost"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_DB: str = "agniveer_db"
+    
+    @property
+    def DATABASE_URL(self) -> str:
+        """Construct database URL"""
+        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+    
+    @property
+    def DATABASE_URL_SYNC(self) -> str:
+        """Synchronous database URL"""
+        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+    
+    # Redis
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: Optional[str] = None
+    
+    @property
+    def REDIS_URL(self) -> str:
+        """Construct Redis URL"""
+        if self.REDIS_PASSWORD:
+            return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}"
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
+    
+    # S3/MinIO Storage
+    S3_ENDPOINT_URL: str = "http://localhost:9000"
+    S3_ACCESS_KEY: str = "minioadmin"
+    S3_SECRET_KEY: str = "minioadmin"
+    S3_BUCKET_NAME: str = "agniveer-documents"
+    S3_REGION: str = "us-east-1"
+    S3_SECURE: bool = False
+    
+    # Weather API
+    OPENWEATHERMAP_API_KEY: str = "your-api-key"
+    OPENWEATHERMAP_BASE_URL: str = "https://api.openweathermap.org/data/2.5"
+    
+    # Email Configuration
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = "noreply@agniveer.mil.in"
+    SMTP_PASSWORD: str = "your-email-password"
+    SMTP_FROM: str = "Agniveer Sentinel <noreply@agniveer.mil.in>"
+    
+    # SMS Configuration
+    SMS_API_KEY: str = "your-sms-api-key"
+    SMS_API_URL: str = "https://sms.example.com/api"
+    
+    # File Upload
+    MAX_FILE_SIZE_MB: int = 10
+    ALLOWED_EXTENSIONS: list = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"]
+    
+    # OCR Configuration
+    TESSERACT_DATA_PATH: Optional[str] = None
+    
+    # CORS
+    BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8000"]
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+
+
+@lru_cache()
+def get_settings() -> Settings:
+    """Get cached settings instance"""
+    return Settings()
+
+
+settings = get_settings()
