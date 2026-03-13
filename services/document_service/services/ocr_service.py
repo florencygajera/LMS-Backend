@@ -111,3 +111,134 @@ class OCRService:
                 break
         
         if address_lines:
+            data["address"] = " ".join([l.strip() for l in address_lines if l.strip()])
+        
+        return data
+    
+    def extract_education_data(self, ocr_text: str) -> Dict[str, Any]:
+        """Extract education certificate data from OCR text"""
+        data = {
+            "name": None,
+            "course": None,
+            "institution": None,
+            "year": None,
+            "percentage": None,
+            "grade": None
+        }
+        
+        lines = [l.strip() for l in ocr_text.split('\n') if l.strip()]
+        
+        # Extract name (usually first significant line)
+        for line in lines[:5]:
+            if len(line) > 3 and not any(c.isdigit() for c in line):
+                data["name"] = line
+                break
+        
+        # Extract course/degree
+        for line in lines:
+            keywords = ["bachelor", "master", "diploma", "degree", "certificate"]
+            if any(kw in line.lower() for kw in keywords):
+                data["course"] = line
+                break
+        
+        # Extract year
+        import re
+        year_pattern = r'(19|20)\d{2}'
+        for line in lines:
+            match = re.search(year_pattern, line)
+            if match:
+                data["year"] = int(match.group())
+                break
+        
+        # Extract percentage/grade
+        percent_pattern = r'(\d+\.?\d*)%'
+        for line in lines:
+            match = re.search(percent_pattern, line)
+            if match:
+                data["percentage"] = float(match.group(1))
+                break
+        
+        return data
+    
+    def extract_medical_data(self, ocr_text: str) -> Dict[str, Any]:
+        """Extract medical report data from OCR text"""
+        data = {
+            "patient_name": None,
+            "doctor_name": None,
+            "diagnosis": None,
+            "date": None,
+            "recommendations": []
+        }
+        
+        lines = [l.strip() for l in ocr_text.split('\n') if l.strip()]
+        
+        # Extract patient name
+        for line in lines[:5]:
+            if "name" in line.lower() and len(line) > 20:
+                parts = line.split(':')
+                if len(parts) > 1:
+                    data["patient_name"] = parts[1].strip()
+        
+        # Extract doctor name
+        for line in lines:
+            if "doctor" in line.lower() or "dr." in line.lower():
+                parts = line.split(':')
+                if len(parts) > 1:
+                    data["doctor_name"] = parts[1].strip()
+                else:
+                    data["doctor_name"] = line.replace("Doctor", "").replace("Dr.", "").strip()
+        
+        # Extract diagnosis
+        for i, line in enumerate(lines):
+            if "diagnosis" in line.lower() or "complaint" in line.lower():
+                if i + 1 < len(lines):
+                    data["diagnosis"] = lines[i + 1]
+        
+        # Extract date
+        import re
+        date_pattern = r'\d{2}-\d{2}-\d{4}'
+        for line in lines:
+            match = re.search(date_pattern, line)
+            if match:
+                data["date"] = match.group()
+                break
+        
+        return data
+    
+    async def process_document(
+        self,
+        document_type: str,
+        file_content: bytes
+    ) -> Dict[str, Any]:
+        """Process document based on type"""
+        
+        # Extract text
+        ocr_text = self.extract_text(file_content)
+        
+        if not ocr_text:
+            return {
+                "success": False,
+                "error": "Could not extract text from document",
+                "text": None,
+                "parsed_data": None
+            }
+        
+        # Parse based on document type
+        parsed_data = None
+        
+        if document_type == "aadhaar":
+            parsed_data = self.extract_aadhaar_data(ocr_text)
+        elif document_type in ["education", "certificate"]:
+            parsed_data = self.extract_education_data(ocr_text)
+        elif document_type in ["medical", "prescription"]:
+            parsed_data = self.extract_medical_data(ocr_text)
+        
+        return {
+            "success": True,
+            "text": ocr_text,
+            "parsed_data": parsed_data
+        }
+
+
+# Singleton instance
+ocr_service = OCRService()
