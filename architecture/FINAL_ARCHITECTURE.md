@@ -1,0 +1,261 @@
+# FINAL ENTERPRISE ARCHITECTURE
+
+## Complete Agniveer Sentinel Platform
+
+---
+
+## 1. COMPLETE SYSTEM ARCHITECTURE
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    FRONTEND LAYER                                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                │
+│  │   React      │  │   Mobile     │  │   Admin      │  │   Trainer    │                │
+│  │   Web App    │  │   (Flutter)  │  │   Portal     │  │   Portal     │                │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘                │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                │
+                                                ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              CDN (CloudFront)                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                │
+                                                ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                        LOAD BALANCER + WAF + SSL                                          │
+│                                    (AWS ALB)                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                │
+                                                ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    API GATEWAY (NGINX)                                    │
+│  ┌──────────────────────────────────────────────────────────────────────────────────┐    │
+│  │ Rate Limiting │ Authentication │ Service Routing │ SSL Termination │ Caching      │    │
+│  └──────────────────────────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                │
+        ┌───────────────────────────────────────┼───────────────────────────────────────┐
+        │                                       │                                       │
+        ▼                                       ▼                                       ▼
+┌───────────────┐                     ┌─────────────────────┐                   ┌───────────────┐
+│ Auth Service  │                     │  Recruitment Svc   │                   │ Soldier Svc  │
+│   (8001)     │                     │     (8002)          │                   │   (8004)     │
+└───────────────┘                     └─────────────────────┘                   └───────────────┘
+        │                                       │                                       │
+        └───────────────────────────────────────┼───────────────────────────────────────┘
+                                                │
+                                                ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              RABBITMQ MESSAGE BUS                                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                 │
+│  │ auth_events  │  │ recruitment  │  │ training     │  │ notification │                 │
+│  │              │  │_events       │  │_events       │  │_events       │                 │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘                 │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                    │                    │                    │
+        ┌───────────┴────┐    ┌─────────┴─────┐    ┌────────┴────────┐
+        ▼                ▼    ▼               ▼    ▼                 ▼
+┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
+│ Celery Main   │ │ OCR Workers   │ │ Report Workers│ │ Notification  │
+│               │ │               │ │               │ │ Workers       │
+└───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘
+        │
+        └────────────────┬────────┬──────────────────────────────────────┘
+                         │        │
+                         ▼        ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     DATA LAYER                                              │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐           │
+│  │  PostgreSQL    │  │   Redis        │  │    S3/MinIO   │  │ Elasticsearch  │           │
+│  │  Primary +     │  │   Cluster      │  │   (Encrypted) │  │   (Logs)      │           │
+│  │  Read Replica │  │   (Cache)      │  │   (Vault)     │  │               │           │
+│  └────────────────┘  └────────────────┘  └────────────────┘  └────────────────┘           │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                │
+                                                ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              INTELLIGENCE LAYER                                            │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐                    │
+│  │ Performance      │  │  Injury Risk     │  │ Training         │                    │
+│  │ Prediction      │  │  Detection       │  │ Optimization     │                    │
+│  │ (ML Models)    │  │  (ML Models)     │  │ (ML Models)     │                    │
+│  └──────────────────┘  └──────────────────┘  └──────────────────┘                    │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                │
+                                                ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                           DATA WAREHOUSE LAYER                                             │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐                    │
+│  │   BigQuery/     │  │   Airflow ETL   │  │   Analytics     │                    │
+│  │   Snowflake    │  │                  │  │   Dashboards   │                    │
+│  └──────────────────┘  └──────────────────┘  └──────────────────┘                    │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                │
+                                                ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                            MONITORING STACK                                                │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐             │
+│  │ Prometheus   │  │  Grafana     │  │ AlertManager │  │     ELK      │             │
+│  │  Metrics     │  │  Dashboards  │  │  Alerts      │  │    Stack     │             │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. COMPLETE FEATURE MATRIX
+
+| Feature | Status | Component |
+|---------|--------|-----------|
+| **Phase 1: Recruitment** | | |
+| Online Application | ✅ | recruitment-service |
+| Document Upload | ✅ | recruitment-service |
+| OCR Processing | ✅ | document-service |
+| Admit Card Generation | ✅ | report-service |
+| Email/SMS | ✅ | notification-service |
+| Exam Management | ✅ | recruitment-service |
+| **Phase 2: Soldier LMS** | | |
+| Profile Management | ✅ | soldier-service |
+| Medical Records | ✅ | soldier-service |
+| Training Tracking | ✅ | training-service |
+| Excel Upload | ✅ | training-service |
+| PDF Reports | ✅ | report-service |
+| Weather Integration | ✅ | weather-service |
+| SOS Alerts | ✅ | notification-service |
+| **Enterprise Features** | | |
+| Distributed Cache | ✅ | Redis cluster |
+| Background Tasks | ✅ | Celery + Redis |
+| Event Bus | ✅ | RabbitMQ |
+| Service Mesh | ✅ | Istio |
+| Kubernetes | ✅ | K8s + Helm |
+| Monitoring | ✅ | Prometheus + Grafana |
+| Logging | ✅ | ELK Stack |
+| Security | ✅ | Vault, encryption |
+| CI/CD | ✅ | GitHub Actions |
+| **AI/ML Features** | | |
+| Performance Prediction | ✅ | ml-service |
+| Injury Risk Detection | ✅ | ml-service |
+| Training Optimization | ✅ | ml-service |
+| Medical Risk Analysis | ✅ | ml-service |
+| Analytics | ✅ | Data Warehouse |
+
+---
+
+## 3. DEPLOYMENT ARCHITECTURE
+
+### Kubernetes Cluster
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                     EKS / AKS / GKE Cluster                           │
+├────────────────────────────────────────────────────────────────────────┤
+│  Namespace: agniveer                                                  │
+│  ┌─────────────────────────────────────────────────────────────────┐ │
+│  │ Ingress-Nginx (Load Balancer)                                  │ │
+│  └─────────────────────────────────────────────────────────────────┘ │
+│  ┌─────────────────────────────────────────────────────────────────┐ │
+│  │ Services (Deployment + HPA)                                    │ │
+│  │ ┌─────────┐ ┌──────────┐ ┌─────────┐ ┌─────────┐         │ │
+│  │ │  Auth   │ │Recruitment│ │ Soldier  │ │Training │         │ │
+│  │ │ x 3-10 │ │  x 3-10   │ │  x 3-15  │ │  x 2-10 │         │ │
+│  │ └─────────┘ └──────────┘ └─────────┘ └─────────┘         │ │
+│  └─────────────────────────────────────────────────────────────────┘ │
+│  ┌─────────────────────────────────────────────────────────────────┐ │
+│  │ Workers (Celery)                                               │ │
+│  │ ┌──────┐ ┌──────┐ ┌───────┐ ┌─────────┐ ┌────────┐        │ │
+│  │ │ Main │ │ OCR  │ │Reports│ │Notifica.│ │Training│        │ │
+│  │ │ x 4  │ │ x 4  │ │  x 2  │ │   x 2   │ │   x 2  │        │ │
+│  │ └──────┘ └──────┘ └───────┘ └─────────┘ └────────┘        │ │
+│  └─────────────────────────────────────────────────────────────────┘ │
+│  ┌─────────────────────────────────────────────────────────────────┐ │
+│  │ Data Stores                                                    │ │
+│  │ ┌─────────┐ ┌────────┐ ┌──────────┐ ┌─────────────┐         │ │
+│  │ │PostgreSQL│ │ Redis  │ │RabbitMQ  │ │ MinIO       │         │ │
+│  │ │ Primary  │ │Cluster │ │ Cluster  │ │ (Documents) │         │ │
+│  │ └─────────┘ └────────┘ └──────────┘ └─────────────┘         │ │
+│  └─────────────────────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 4. SECURITY ARCHITECTURE
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     SECURITY LAYERS                              │
+├─────────────────────────────────────────────────────────────────┤
+│ 1. Network Security                                            │
+│    ├─ VPC Isolation                                           │
+│    ├─ Security Groups                                          │
+│    ├─ Network ACLs                                             │
+│    └─ Private Subnets                                           │
+│                                                                 │
+│ 2. Transport Security (TLS 1.3)                               │
+│    ├─ HTTPS Everywhere                                         │
+│    ├─ mTLS between services                                     │
+│    └─ WAF Protection                                           │
+│                                                                 │
+│ 3. Application Security                                        │
+│    ├─ JWT + OAuth2                                             │
+│    ├─ RBAC                                                     │
+│    ├─ Rate Limiting                                            │
+│    └─ Input Validation                                         │
+│                                                                 │
+│ 4. Data Security                                               │
+│    ├─ Encryption at Rest (AES-256)                            │
+│    ├─ Database Encryption                                      │
+│    ├─ Document Vault (S3)                                     │
+│    └─ Secrets Management (Vault)                               │
+│                                                                 │
+│ 5. Audit & Compliance                                          │
+│    ├─ Comprehensive Logging                                     │
+│    ├─ Audit Trails                                              │
+│    └─ Compliance Reports                                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 5. SERVICE ENDPOINTS
+
+| Service | Port | API Path |
+|---------|------|----------|
+| Auth | 8001 | /api/v1/auth/ |
+| Recruitment | 8002 | /api/v1/recruitment/ |
+| Soldier | 8004 | /api/v1/soldiers/ |
+| Training | 8006 | /api/v1/training/ |
+| Report | 8008 | /api/v1/reports/ |
+| Notification | 8009 | /api/v1/notifications/ |
+| Weather | 8011 | /api/v1/weather/ |
+| ML | 8015 | /api/v1/ml/ |
+
+---
+
+## 6. COMPLETE DELIVERABLES
+
+1. ✅ System Architecture Documentation
+2. ✅ Database Schema (PostgreSQL + SQLAlchemy)
+3. ✅ FastAPI Project Structure
+4. ✅ Authentication System (JWT + OAuth2 + RBAC)
+5. ✅ Recruitment System APIs
+6. ✅ Soldier Management LMS APIs
+7. ✅ OCR Pipeline (pytesseract + OpenCV)
+8. ✅ Excel Processing (pandas)
+9. ✅ PDF Report Generation (ReportLab)
+10. ✅ WebSocket Notifications (SOS)
+11. ✅ Distributed Cache Layer (Redis)
+12. ✅ Background Task Processing (Celery)
+13. ✅ Event-Driven Architecture (RabbitMQ)
+14. ✅ Kubernetes Deployment (Helm)
+15. ✅ Disaster Recovery Scripts
+16. ✅ Encryption Configuration
+17. ✅ Secrets Management (Vault)
+18. ✅ Monitoring (Prometheus + Grafana)
+19. ✅ CI/CD Pipeline (GitHub Actions)
+20. ✅ AI/ML Models (Performance, Injury Risk, Training)
+21. ✅ Data Warehouse (ETL Pipeline)
+
+---
+
+*Final Architecture Version: 1.0*
+*Last Updated: 2026-03-13*
