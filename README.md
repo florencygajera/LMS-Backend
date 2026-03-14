@@ -106,14 +106,14 @@ agniveer-sentinel/
 │       └── base.py         # Base models & enums
 │
 ├── services/
-│   ├── auth-service/       # Authentication service
-│   ├── recruitment-service/ # Phase 1: Recruitment
-│   ├── soldier-service/    # Phase 2: Soldier Management
-│   ├── training-service/   # Training Excel processing
+│   ├── auth_service/       # Authentication service
+│   ├── recruitment_service/ # Phase 1: Recruitment
+│   ├── soldier_service/    # Phase 2: Soldier Management
+│   ├── training_service/   # Training Excel processing
 │   ├── document-service/  # OCR document processing
 │   ├── report-service/    # PDF report generation
-│   ├── notification-service/ # WebSocket notifications
-│   └── weather-service/   # Weather integration
+│   ├── notification_service/ # WebSocket notifications
+│   └── weather_service/   # Weather integration
 │
 ├── architecture/
 │   └── SYSTEM_ARCHITECTURE.md
@@ -240,15 +240,15 @@ docker-compose up -d
 
 ```bash
 # Auth Service
-cd services/auth-service
+cd services/auth_service
 uvicorn main:app --reload --port 8001
 
 # Recruitment Service
-cd services/recruitment-service
+cd services/recruitment_service
 uvicorn main:app --reload --port 8002
 
 # Soldier Service
-cd services/soldier-service
+cd services/soldier_service
 uvicorn main:app --reload --port 8004
 ```
 
