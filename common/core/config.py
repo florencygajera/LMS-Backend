@@ -3,14 +3,21 @@ Common Configuration Module
 Agniveer Sentinel - Military Training Platform
 """
 
-from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional
-import os
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application Settings"""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",
+    )
     
     # App Configuration
     APP_NAME: str = "Agniveer Sentinel"
@@ -78,17 +85,36 @@ class Settings(BaseSettings):
     
     # File Upload
     MAX_FILE_SIZE_MB: int = 10
-    ALLOWED_EXTENSIONS: list = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"]
+    ALLOWED_EXTENSIONS: list[str] = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"]
     
     # OCR Configuration
     TESSERACT_DATA_PATH: Optional[str] = None
     
     # CORS
-    BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8000"]
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    BACKEND_CORS_ORIGINS_RAW: str = Field(
+        default="http://localhost:3000,http://localhost:8000",
+        validation_alias="CORS_ORIGINS",
+    )
+
+    @property
+    def BACKEND_CORS_ORIGINS(self) -> list[str]:
+        return [
+            origin.strip()
+            for origin in self.BACKEND_CORS_ORIGINS_RAW.split(",")
+            if origin.strip()
+        ]
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def parse_debug(cls, value):
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"debug", "development", "dev", "true", "1", "yes", "on"}:
+                return True
+            if normalized in {"release", "production", "prod", "false", "0", "no", "off"}:
+                return False
+        return value
+
 
 
 @lru_cache()

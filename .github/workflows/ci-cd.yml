@@ -5,8 +5,10 @@ name: CI/CD Pipeline
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [develop, main]
   push:
-    branches: [develop]
+    branches: [develop, main]
 
 env:
   REGISTRY: ghcr.io
@@ -16,6 +18,7 @@ jobs:
   # Run tests
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     services:
       postgres:
@@ -48,11 +51,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
       
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install flake8
       
       - name: Compile all python files
         run: |
@@ -60,11 +65,11 @@ jobs:
 
       - name: Run linter
         run: |
-          pip install flake8
-          flake8 common services tests infrastructure --count --select=E9,F63,F7,F82 --show-source --statistics
+          python -m flake8 common services tests infrastructure --jobs 1 --count --select=E9,F63,F7,F82 --show-source --statistics
       
       - name: Run tests
         env:
+          DEBUG: "false"
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
           POSTGRES_USER: postgres
@@ -73,24 +78,26 @@ jobs:
           REDIS_HOST: localhost
           REDIS_PORT: 6379
         run: |
-          pytest tests/ -v --cov=services --cov-report=xml
+          python -m pytest tests/ -v --cov=services --cov-report=xml
       
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage.xml
+          fail_ci_if_error: false
 
   # Build Docker images
   build:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Validate docker-compose configuration
-        run: docker compose config -q
+        run: docker compose -f docker-compose.yml config -q
 
       - name: Build service images
         run: |
