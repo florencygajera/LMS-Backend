@@ -86,7 +86,6 @@ async def login(
         audit_log = AuditLog(
             user_id=user.id if user else None,
             action="login_failed",
-            username=form_data.username,
             details="Invalid credentials"
         )
         db.add(audit_log)
