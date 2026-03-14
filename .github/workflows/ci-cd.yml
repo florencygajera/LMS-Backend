@@ -58,6 +58,17 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install flake8
+          python -m pip check
+
+      - name: Run database migrations
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        run: |
+          alembic upgrade head
       
       - name: Compile all python files
         run: |
@@ -101,12 +112,13 @@ jobs:
 
       - name: Build service images
         run: |
-          docker compose build auth-service recruitment-service soldier-service training-service notification-service weather-service
+          docker compose build auth-service recruitment-service soldier-service document-service training-service report-service notification-service ml-service weather-service
 
       - name: Ensure required deployment files exist
         run: |
           test -f docker-compose.yml
           test -f nginx.conf
+          test -f infrastructure/k8s/Chart.yaml
 
   # Deploy to staging
   deploy-staging:

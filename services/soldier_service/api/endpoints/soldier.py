@@ -3,7 +3,7 @@ Soldier Management Endpoints
 Agniveer Sentinel - Phase 2: Soldier Management LMS
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Request, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 from datetime import datetime, date, timedelta
@@ -14,7 +14,15 @@ import string
 import json
 
 from common.core.database import get_db
+from common.core.audit import log_security_event
+from common.core.authorization import (
+    admin_required,
+    can_access_medical_record,
+    can_access_soldier_profile,
+    trainer_required,
+)
 from common.core.security import get_current_user
+from common.core.storage import storage
 from common.models.base import UserRole
 from services.auth_service.models.user import User
 from services.soldier_service.models.soldier import (
@@ -50,7 +58,8 @@ def generate_soldier_id() -> str:
 @router.post("/profile", response_model=SoldierResponse, status_code=status.HTTP_201_CREATED)
 async def create_soldier_profile(
     soldier_data: SoldierCreate,
-    current_user: User = Depends(get_current_user),
+    request: Request,
+    current_user: User = Depends(admin_required),
     db: AsyncSession = Depends(get_db)
 ):
     """Create soldier profile (Admin)"""
@@ -99,7 +108,17 @@ async def create_soldier_profile(
     user = result.scalar_one_or_none()
     if user:
         user.role = UserRole.SOLDIER
-    
+
+    await log_security_event(
+        db,
+        action="soldier_profile_created",
+        request=request,
+        user=current_user,
+        resource_type="soldier",
+        resource_id=soldier.id,
+        details=f"user_id={soldier_data.user_id}",
+    )
+
     await db.commit()
     await db.refresh(soldier)
     
@@ -131,21 +150,14 @@ async def get_soldier_profile(
     db: AsyncSession = Depends(get_db)
 ):
     """Get soldier profile by ID (Admin)"""
-    result = await db.execute(select(Soldier).where(Soldier.id == soldier_id))
-    soldier = result.scalar_one_or_none()
-    
-    if not soldier:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Soldier not found"
-        )
-    
+    soldier = await can_access_soldier_profile(soldier_id, current_user, db)
     return soldier
 
 
 @router.put("/profile", response_model=SoldierResponse)
 async def update_my_profile(
     soldier_data: SoldierUpdate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -162,7 +174,16 @@ async def update_my_profile(
     # Update fields
     for field, value in soldier_data.model_dump(exclude_unset=True).items():
         setattr(soldier, field, value)
-    
+
+    await log_security_event(
+        db,
+        action="soldier_profile_updated",
+        request=request,
+        user=current_user,
+        resource_type="soldier",
+        resource_id=soldier.id,
+    )
+
     await db.commit()
     await db.refresh(soldier)
     
@@ -186,22 +207,23 @@ async def upload_document(
             detail="Soldier profile not found"
         )
     
-    # Upload to S3/MinIO
-    file_name = f"{soldier.soldier_id}/{document_type}_{uuid.uuid4()}_{file.filename}"
-    file_url = f"https://storage.example.com/{file_name}"
+    file_content = await file.read()
+    object_key = f"soldiers/{soldier.soldier_id}/{document_type}_{uuid.uuid4()}_{file.filename}"
+    object_uri = storage.upload_bytes(object_key, file_content, file.content_type or "application/octet-stream")
     
     document = SoldierDocument(
         soldier_id=soldier.id,
         document_type=document_type,
         document_name=file.filename,
-        file_url=file_url,
+        file_url=object_uri,
         file_name=file.filename,
     )
     
     db.add(document)
+    await db.flush()
     await db.commit()
     
-    return {"document_id": document.id, "file_url": file_url}
+    return {"document_id": document.id, "file_url": storage.generate_presigned_url(object_uri)}
 
 
 # ==================== Battalion Endpoints ====================
@@ -209,7 +231,7 @@ async def upload_document(
 @router.post("/battalions", response_model=BattalionResponse, status_code=status.HTTP_201_CREATED)
 async def create_battalion(
     battalion_data: BattalionCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(admin_required),
     db: AsyncSession = Depends(get_db)
 ):
     """Create new battalion (Admin)"""
@@ -252,6 +274,7 @@ async def get_battalion(
 @router.post("/medical-records", response_model=MedicalRecordResponse, status_code=status.HTTP_201_CREATED)
 async def create_medical_record(
     record_data: MedicalRecordCreate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -272,6 +295,14 @@ async def create_medical_record(
     )
     
     db.add(record)
+    await log_security_event(
+        db,
+        action="medical_record_created",
+        request=request,
+        user=current_user,
+        resource_type="medical_record",
+        details=f"soldier_id={soldier.id}",
+    )
     await db.commit()
     await db.refresh(record)
     
@@ -310,15 +341,7 @@ async def get_medical_record(
     db: AsyncSession = Depends(get_db)
 ):
     """Get specific medical record"""
-    result = await db.execute(select(MedicalRecord).where(MedicalRecord.id == record_id))
-    record = result.scalar_one_or_none()
-    
-    if not record:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Medical record not found"
-        )
-    
+    record = await can_access_medical_record(record_id, current_user, db)
     return record
 
 
@@ -327,7 +350,7 @@ async def get_medical_record(
 @router.post("/training-records", response_model=TrainingRecordResponse, status_code=status.HTTP_201_CREATED)
 async def create_training_record(
     record_data: TrainingRecordCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(trainer_required),
     db: AsyncSession = Depends(get_db)
 ):
     """Create training record (Trainer)"""
@@ -507,18 +530,27 @@ async def get_rankings(
 @router.post("/sos", response_model=SOSAlertResponse, status_code=status.HTTP_201_CREATED)
 async def trigger_sos(
     sos_data: SOSAlertCreate,
-    current_user: User = Depends(get_current_user),
+    request: Request,
+    current_user: User = Depends(admin_required),
     db: AsyncSession = Depends(get_db)
 ):
     """Trigger SOS alert (Admin)"""
     sos = SOSAlert(
         alert_message=sos_data.alert_message,
-        alert_type=sos_data.alert_message,
+        alert_type=sos_data.alert_type,
         battalion_id=sos_data.battalion_id,
         triggered_by=current_user.id,
     )
     
     db.add(sos)
+    await log_security_event(
+        db,
+        action="sos_triggered",
+        request=request,
+        user=current_user,
+        resource_type="sos_alert",
+        details=sos_data.alert_message,
+    )
     await db.commit()
     await db.refresh(sos)
     

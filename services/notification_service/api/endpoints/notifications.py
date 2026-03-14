@@ -11,6 +11,7 @@ from typing import Optional
 from datetime import datetime
 
 from common.core.database import get_db
+from common.core.authorization import admin_required
 from common.core.security import get_current_user
 from common.models.base import UserRole
 from services.auth_service.models.user import User
@@ -25,15 +26,11 @@ router = APIRouter()
 @router.websocket("/ws/notifications")
 async def websocket_notifications(websocket: WebSocket, user_id: int):
     """WebSocket endpoint for real-time notifications"""
-    await notification_service.manager.connect(websocket, user_id)
-    
     try:
-        while True:
-            # Keep connection alive
-            data = await websocket.receive_text()
-            message = await notification_service.handle_message(user_id, data)
-            
+        await notification_service.handle_websocket_connection(websocket, user_id)
     except WebSocketDisconnect:
+        notification_service.manager.disconnect(user_id)
+    except Exception:
         notification_service.manager.disconnect(user_id)
 
 
@@ -43,7 +40,7 @@ async def send_notification(
     title: str,
     body: str,
     notification_type: str = "info",
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(admin_required),
     db: AsyncSession = Depends(get_db)
 ):
     """Send notification to a specific user"""
@@ -58,7 +55,7 @@ async def send_notification(
         )
     
     # Send notification
-    await notification_service.notify_soldier(user_id, title, body)
+    await notification_service.notify_soldier(user_id, title, body, notification_type)
     
     return {"success": True, "message": "Notification sent"}
 
@@ -69,7 +66,7 @@ async def broadcast_notification(
     body: str,
     notification_type: str = "info",
     battalion_id: Optional[int] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(admin_required),
     db: AsyncSession = Depends(get_db)
 ):
     """Broadcast notification to all soldiers or battalion"""

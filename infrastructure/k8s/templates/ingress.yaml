@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "agniveer.fullname" . }}-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ .Values.global.domain }}
+      secretName: agniveer-tls
+  rules:
+    - host: {{ .Values.global.domain }}
+      http:
+        paths:
+          {{- range $name, $svc := .Values.services }}
+          - path: {{ $svc.path }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $name }}
+                port:
+                  number: {{ $svc.port }}
+          {{- end }}

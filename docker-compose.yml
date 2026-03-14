@@ -31,6 +31,19 @@ services:
       timeout: 5s
       retries: 5
 
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: agniveer_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
   # MinIO (S3-compatible storage)
   minio:
     image: minio/minio:latest
@@ -114,6 +127,16 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Document Service
+  document-service:
+    build:
+      context: .
+      dockerfile: services/document_service/Dockerfile
+    container_name: agniveer_document
+    ports:
+      - "8003:8003"
+    restart: unless-stopped
+
   # Training Service
   training-service:
     build:
@@ -149,6 +172,32 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Report Service
+  report-service:
+    build:
+      context: .
+      dockerfile: services/report_service/Dockerfile
+    container_name: agniveer_report
+    ports:
+      - "8008:8008"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ML Service
+  ml-service:
+    build:
+      context: .
+      dockerfile: services/ml_service/Dockerfile
+    container_name: agniveer_ml
+    ports:
+      - "8010:8010"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
   # Weather Service
   weather-service:
     build:
@@ -174,8 +223,11 @@ services:
       - auth-service
       - recruitment-service
       - soldier-service
+      - document-service
       - training-service
       - notification-service
+      - report-service
+      - ml-service
       - weather-service
     restart: unless-stopped
 

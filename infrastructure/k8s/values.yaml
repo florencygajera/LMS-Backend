@@ -188,3 +188,186 @@ security:
     enabled: true
   networkPolicy:
     enabled: true
+
+secrets:
+  jwtSecret: "change-me"
+  postgresUser: "postgres"
+  postgresPassword: "postgres"
+  s3AccessKey: "minioadmin"
+  s3SecretKey: "minioadmin"
+  smtpUser: "noreply@example.com"
+  smtpPassword: "change-me"
+  weatherApiKey: "change-me"
+
+services:
+  auth-service:
+    path: /api/v1/auth
+    port: 8001
+    replicaCount: 2
+    image:
+      repository: ghcr.io/agniveer/auth-service
+      tag: latest
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+  recruitment-service:
+    path: /api/v1/recruitment
+    port: 8002
+    replicaCount: 2
+    image:
+      repository: ghcr.io/agniveer/recruitment-service
+      tag: latest
+    resources:
+      requests:
+        cpu: 300m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+  document-service:
+    path: /api/v1/documents
+    port: 8003
+    replicaCount: 1
+    image:
+      repository: ghcr.io/agniveer/document-service
+      tag: latest
+    resources:
+      requests:
+        cpu: 300m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+      targetCPUUtilizationPercentage: 70
+  soldier-service:
+    path: /api/v1/soldiers
+    port: 8004
+    replicaCount: 2
+    image:
+      repository: ghcr.io/agniveer/soldier-service
+      tag: latest
+    resources:
+      requests:
+        cpu: 300m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 12
+      targetCPUUtilizationPercentage: 70
+  training-service:
+    path: /api/v1/training
+    port: 8006
+    replicaCount: 2
+    image:
+      repository: ghcr.io/agniveer/training-service
+      tag: latest
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2
+        memory: 2Gi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+  report-service:
+    path: /api/v1/reports
+    port: 8008
+    replicaCount: 1
+    image:
+      repository: ghcr.io/agniveer/report-service
+      tag: latest
+    resources:
+      requests:
+        cpu: 300m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+      targetCPUUtilizationPercentage: 70
+  notification-service:
+    path: /api/v1/notifications
+    port: 8009
+    replicaCount: 2
+    image:
+      repository: ghcr.io/agniveer/notification-service
+      tag: latest
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 70
+  ml-service:
+    path: /api/v1/ml
+    port: 8010
+    replicaCount: 1
+    image:
+      repository: ghcr.io/agniveer/ml-service
+      tag: latest
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2
+        memory: 2Gi
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+      targetCPUUtilizationPercentage: 70
+  weather-service:
+    path: /api/v1/weather
+    port: 8011
+    replicaCount: 1
+    image:
+      repository: ghcr.io/agniveer/weather-service
+      tag: latest
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+      targetCPUUtilizationPercentage: 70

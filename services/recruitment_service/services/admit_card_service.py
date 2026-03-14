@@ -4,14 +4,23 @@ Agniveer Sentinel - Phase 1: Recruitment System
 """
 
 import io
-import qrcode
 from datetime import datetime
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from typing import Optional
+
+import aiosmtplib
+import httpx
+import qrcode
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
+
+from common.core.config import settings
+from common.core.storage import storage
 
 
 class AdmitCardGenerator:
@@ -45,7 +54,7 @@ class AdmitCardGenerator:
         exam_date: str,
         exam_time: str,
         candidate_photo_url: Optional[str] = None,
-    ) -> bytes:
+    ) -> tuple[bytes, str]:
         """Generate admit card PDF"""
         
         # Generate admit card number
@@ -139,6 +148,20 @@ class AdmitCardGenerator:
         qr_bytes = self.generate_qr_code(qr_data)
         qr_image = ImageReader(io.BytesIO(qr_bytes))
         c.drawImage(qr_image, self.page_width - 2.5*inch, self.page_height - 6*inch, width=1.5*inch, height=1.5*inch)
+
+        if candidate_photo_url:
+            try:
+                photo_bytes = storage.download_bytes(candidate_photo_url)
+                photo_image = ImageReader(io.BytesIO(photo_bytes))
+                c.drawImage(
+                    photo_image,
+                    self.page_width - 2.5*inch,
+                    self.page_height - 4.1*inch,
+                    width=1.2*inch,
+                    height=1.4*inch
+                )
+            except Exception:
+                pass
         
         # Instructions
         y_position -= 0.6*inch
@@ -188,9 +211,35 @@ class NotificationService:
         registration_id: str
     ) -> bool:
         """Send admit card via email"""
-        # Implementation would use aiohttp/smtp
-        # For now, return success
-        print(f"Would send email to {email} with admit card for {candidate_name} ({registration_id})")
+        if not email:
+            return False
+
+        message = MIMEMultipart()
+        message["Subject"] = f"Agniveer Admit Card - {registration_id}"
+        message["From"] = settings.SMTP_FROM
+        message["To"] = email
+        message.attach(
+            MIMEText(
+                f"Dear {candidate_name}, your admit card is attached for registration {registration_id}.",
+                "plain"
+            )
+        )
+        attachment = MIMEApplication(admit_card_pdf, _subtype="pdf")
+        attachment.add_header(
+            "Content-Disposition",
+            "attachment",
+            filename=f"admit-card-{registration_id}.pdf",
+        )
+        message.attach(attachment)
+
+        await aiosmtplib.send(
+            message,
+            hostname=settings.SMTP_HOST,
+            port=settings.SMTP_PORT,
+            username=settings.SMTP_USER,
+            password=settings.SMTP_PASSWORD,
+            start_tls=True,
+        )
         return True
     
     async def send_admit_card_sms(
@@ -201,9 +250,17 @@ class NotificationService:
         exam_date: str
     ) -> bool:
         """Send admit card notification via SMS"""
-        # Implementation would use SMS API
         message = f"Admit Card for Agniveer Recruitment - CET. Registration: {registration_id}, Exam Date: {exam_date}. Check your email for the admit card."
-        print(f"Would send SMS to {phone_number}: {message}")
+        if not phone_number or not settings.SMS_API_URL or not settings.SMS_API_KEY:
+            return False
+
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                settings.SMS_API_URL,
+                json={"phone_number": phone_number, "message": message},
+                headers={"Authorization": f"Bearer {settings.SMS_API_KEY}"},
+            )
+            response.raise_for_status()
         return True
 
 

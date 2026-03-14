@@ -3,7 +3,7 @@ Authentication Endpoints
 Agniveer Sentinel - Auth Service
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -72,6 +72,7 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 async def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db)
 ):
@@ -86,7 +87,9 @@ async def login(
         audit_log = AuditLog(
             user_id=user.id if user else None,
             action="login_failed",
-            details="Invalid credentials"
+            details="Invalid credentials",
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
         )
         db.add(audit_log)
         await db.commit()
@@ -132,7 +135,9 @@ async def login(
     audit_log = AuditLog(
         user_id=user.id,
         action="login_success",
-        details=f"User logged in successfully"
+        details="User logged in successfully",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
     )
     db.add(audit_log)
     await db.commit()

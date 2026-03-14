@@ -3,15 +3,25 @@ Security Middleware
 Agniveer Sentinel - Enterprise Production
 """
 
-from fastapi import Request, HTTPException, status
+import logging
+import os
+import time
+from typing import Callable
+
+import redis
+from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
-from starlette.datastructures import Headers
-from typing import Callable
-import time
-import redis
-import os
+from pythonjsonlogger import jsonlogger
+
+
+logger = logging.getLogger("agniveer.audit")
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(jsonlogger.JsonFormatter())
+    logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -85,24 +95,40 @@ class LoginAttemptMiddleware(BaseHTTPMiddleware):
         # Only track login attempts
         if "/auth/login" not in request.url.path:
             return await call_next(request)
-        
+
+        client_ip = request.client.host if request.client else "unknown"
+        username = "unknown"
+        try:
+            form = await request.form()
+            username = str(form.get("username") or form.get("email") or "unknown").strip().lower()
+        except Exception:
+            pass
+
+        username_key = f"login_attempts:user:{username}"
+        ip_key = f"login_attempts:ip:{client_ip}"
+        account_lock_key = f"account_locked:{username}:{client_ip}"
+
+        try:
+            if self.redis_client and self.redis_client.get(account_lock_key):
+                return JSONResponse(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    content={"detail": "Account locked due to too many failed attempts."},
+                )
+        except Exception:
+            pass
+
         response = await call_next(request)
-        
+
         # If login failed (401), track the attempt
         if response.status_code == 401:
-            # Get username from request body (simplified)
-            username = "unknown"
-            
-            key = f"login_attempts:{username}"
-            
             try:
                 if self.redis_client:
-                    attempts = self.redis_client.get(key)
-                    
-                    if attempts and int(attempts) >= self.max_attempts:
-                        # Lock account
+                    username_attempts = int(self.redis_client.get(username_key) or 0)
+                    ip_attempts = int(self.redis_client.get(ip_key) or 0)
+
+                    if username_attempts >= self.max_attempts or ip_attempts >= self.max_attempts:
                         self.redis_client.setex(
-                            f"account_locked:{username}",
+                            account_lock_key,
                             self.lockout_minutes * 60,
                             "1"
                         )
@@ -112,12 +138,21 @@ class LoginAttemptMiddleware(BaseHTTPMiddleware):
                         )
                     
                     pipe = self.redis_client.pipeline()
-                    pipe.incr(key)
-                    pipe.expire(key, self.lockout_minutes * 60)
+                    pipe.incr(username_key)
+                    pipe.expire(username_key, self.lockout_minutes * 60)
+                    pipe.incr(ip_key)
+                    pipe.expire(ip_key, self.lockout_minutes * 60)
                     pipe.execute()
             except Exception:
                 pass
-        
+
+        if response.status_code == 200:
+            try:
+                if self.redis_client:
+                    self.redis_client.delete(username_key, ip_key, account_lock_key)
+            except Exception:
+                pass
+
         return response
 
 
@@ -153,7 +188,6 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
         # Calculate duration
         duration = time.time() - start_time
         
-        # Log request (would send to Elasticsearch in production)
         audit_data = {
             "timestamp": time.time(),
             "method": request.method,
@@ -163,10 +197,8 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
             "client_ip": request.client.host,
             "user_agent": request.headers.get("user-agent", ""),
         }
-        
-        # In production, send to audit log service
-        # audit_service.log(audit_data)
-        
+
+        logger.info("audit_event", extra={"event": audit_data})
         return response
 
 

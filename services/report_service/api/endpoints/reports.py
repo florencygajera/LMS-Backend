@@ -12,6 +12,7 @@ from datetime import date, datetime
 import io
 
 from common.core.database import get_db
+from common.core.authorization import can_access_soldier_profile
 from common.core.security import get_current_user
 from common.models.base import UserRole
 from services.auth_service.models.user import User
@@ -31,14 +32,7 @@ async def generate_daily_report(
 ):
     """Generate daily performance report as PDF"""
     # Verify soldier
-    result = await db.execute(select(Soldier).where(Soldier.id == soldier_id))
-    soldier = result.scalar_one_or_none()
-    
-    if not soldier:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Soldier not found"
-        )
+    soldier = await can_access_soldier_profile(soldier_id, current_user, db)
     
     # Get training records for the date
     result = await db.execute(
@@ -101,14 +95,7 @@ async def generate_monthly_report(
 ):
     """Generate monthly progress report as PDF"""
     # Verify soldier
-    result = await db.execute(select(Soldier).where(Soldier.id == soldier_id))
-    soldier = result.scalar_one_or_none()
-    
-    if not soldier:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Soldier not found"
-        )
+    soldier = await can_access_soldier_profile(soldier_id, current_user, db)
     
     # Get training records for the month
     start_date = datetime(year, month, 1).date()
@@ -192,14 +179,7 @@ async def generate_medical_report(
 ):
     """Generate medical report as PDF"""
     # Verify soldier
-    result = await db.execute(select(Soldier).where(Soldier.id == soldier_id))
-    soldier = result.scalar_one_or_none()
-    
-    if not soldier:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Soldier not found"
-        )
+    soldier = await can_access_soldier_profile(soldier_id, current_user, db)
     
     # Get medical records
     result = await db.execute(
@@ -245,14 +225,7 @@ async def generate_stipend_report(
 ):
     """Generate stipend report as PDF"""
     # Verify soldier
-    result = await db.execute(select(Soldier).where(Soldier.id == soldier_id))
-    soldier = result.scalar_one_or_none()
-    
-    if not soldier:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Soldier not found"
-        )
+    soldier = await can_access_soldier_profile(soldier_id, current_user, db)
     
     # Get stipend records
     result = await db.execute(

@@ -3,7 +3,7 @@ Recruitment Endpoints
 Agniveer Sentinel - Phase 1: Recruitment System
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Request, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime, date
@@ -13,7 +13,10 @@ import random
 import string
 
 from common.core.database import get_db
+from common.core.audit import log_security_event
+from common.core.authorization import admin_required
 from common.core.security import get_current_user
+from common.core.storage import storage
 from common.models.base import UserRole, ApplicationStatus
 from services.auth_service.models.user import User
 from services.recruitment_service.models.recruitment import (
@@ -24,7 +27,11 @@ from services.recruitment_service.schemas.recruitment import (
     CandidateCreate, CandidateUpdate, CandidateResponse,
     ApplicationCreate, ApplicationResponse, ExamCenterResponse,
     ExamResponse, ExamRegistrationResponse, AdmitCardResponse,
-    ApplicationStatusResponse, DocumentUploadResponse
+    ApplicationStatusResponse, ApplicationVerificationRequest, DocumentUploadResponse
+)
+from services.recruitment_service.services.admit_card_service import (
+    admit_card_generator,
+    notification_service,
 )
 
 
@@ -171,27 +178,28 @@ async def upload_document(
             detail="Application not found"
         )
     
-    # Upload to S3/MinIO (simplified - would use boto3 in production)
-    file_name = f"{candidate.registration_id}/{document_type}_{uuid.uuid4()}_{file.filename}"
-    file_url = f"https://storage.example.com/{file_name}"
+    file_content = await file.read()
+    object_key = f"recruitment/{candidate.registration_id}/{document_type}_{uuid.uuid4()}_{file.filename}"
+    object_uri = storage.upload_bytes(object_key, file_content, file.content_type or "application/octet-stream")
     
     # Create document record
     document = CandidateDocument(
         candidate_id=candidate.id,
         document_type=document_type,
-        file_url=file_url,
+        file_url=object_uri,
         file_name=file.filename,
-        file_size=0,  # Would calculate from file
+        file_size=len(file_content),
         mime_type=file.content_type
     )
     
     db.add(document)
+    await db.flush()
     await db.commit()
     
     return DocumentUploadResponse(
         document_id=document.id,
         document_type=document_type,
-        file_url=file_url,
+        file_url=storage.generate_presigned_url(object_uri),
         file_name=file.filename
     )
 
@@ -353,13 +361,10 @@ async def get_admit_card(
 @router.post("/verify/{candidate_id}")
 async def verify_application(
     candidate_id: int,
-    age_eligible: bool,
-    education_eligible: bool,
-    physical_eligible: bool,
-    documents_verified: bool,
-    verification_notes: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    payload: ApplicationVerificationRequest,
+    request: Request,
+    current_user: User = Depends(admin_required),
+    db: AsyncSession = Depends(get_db),
 ):
     """Verify candidate application (Admin)"""
     result = await db.execute(select(Candidate).where(Candidate.id == candidate_id))
@@ -374,15 +379,31 @@ async def verify_application(
     # Update application
     application = candidate.application
     if not application:
-        application = Application(candidate_id=candidate.id)
+        application = Application(
+            candidate_id=candidate.id,
+            recruitment_batch=payload.recruitment_batch,
+            force_type=payload.force_type,
+            trade_category=payload.trade_category,
+        )
         db.add(application)
+    else:
+        application.recruitment_batch = payload.recruitment_batch
+        application.force_type = payload.force_type
+        application.trade_category = payload.trade_category
     
-    application.age_eligible = age_eligible
-    application.education_eligible = education_eligible
-    application.physical_eligible = physical_eligible
-    application.documents_verified = documents_verified
-    application.overall_eligible = all([age_eligible, education_eligible, physical_eligible, documents_verified])
-    application.verification_notes = verification_notes
+    application.age_eligible = payload.age_eligible
+    application.education_eligible = payload.education_eligible
+    application.physical_eligible = payload.physical_eligible
+    application.documents_verified = payload.documents_verified
+    application.overall_eligible = all(
+        [
+            payload.age_eligible,
+            payload.education_eligible,
+            payload.physical_eligible,
+            payload.documents_verified,
+        ]
+    )
+    application.verification_notes = payload.verification_notes
     application.verified_by = current_user.id
     application.verified_at = datetime.utcnow()
     
@@ -391,6 +412,73 @@ async def verify_application(
         candidate.application_status = ApplicationStatus.VERIFIED
     else:
         candidate.application_status = ApplicationStatus.REJECTED
+
+    await log_security_event(
+        db,
+        action="candidate_verified",
+        request=request,
+        user=current_user,
+        resource_type="candidate",
+        resource_id=candidate.id,
+        details=f"overall_eligible={application.overall_eligible}",
+    )
+
+    if application.overall_eligible and candidate.admit_card is None:
+        registration_result = await db.execute(
+            select(ExamRegistration).where(ExamRegistration.candidate_id == candidate.id)
+        )
+        registration = registration_result.scalar_one_or_none()
+        if registration:
+            user_result = await db.execute(select(User).where(User.id == candidate.user_id))
+            candidate_user = user_result.scalar_one_or_none()
+            exam_result = await db.execute(select(Exam).where(Exam.id == registration.exam_id))
+            exam = exam_result.scalar_one_or_none()
+            center_result = await db.execute(select(ExamCenter).where(ExamCenter.id == exam.exam_center_id))
+            exam_center = center_result.scalar_one_or_none()
+            candidate_name = candidate_user.full_name if candidate_user else candidate.registration_id
+            qr_key = f"admit-cards/{candidate.registration_id}/qr.png"
+            qr_uri = storage.upload_bytes(
+                qr_key,
+                admit_card_generator.generate_qr_code(registration.registration_number),
+                "image/png",
+            )
+            pdf_bytes, admit_card_number = admit_card_generator.generate_admit_card_pdf(
+                candidate_name=candidate_name,
+                registration_id=candidate.registration_id,
+                exam_center=exam_center.center_name,
+                exam_date=str(exam.exam_date),
+                exam_time=exam.start_time.strftime("%H:%M"),
+                candidate_photo_url=None,
+            )
+            pdf_key = f"admit-cards/{candidate.registration_id}/{admit_card_number}.pdf"
+            pdf_uri = storage.upload_bytes(pdf_key, pdf_bytes, "application/pdf")
+            admit_card = AdmitCard(
+                candidate_id=candidate.id,
+                exam_id=exam.id,
+                exam_registration_id=registration.id,
+                admit_card_number=admit_card_number,
+                exam_venue=exam_center.center_name,
+                exam_date=exam.exam_date,
+                exam_start_time=exam.start_time.strftime("%H:%M"),
+                exam_end_time=exam.end_time.strftime("%H:%M"),
+                qr_code_url=qr_uri,
+                pdf_url=pdf_uri,
+            )
+            db.add(admit_card)
+            if candidate_user:
+                admit_card.email_sent = await notification_service.send_admit_card_email(
+                    email=candidate_user.email,
+                    candidate_name=candidate_name,
+                    admit_card_pdf=pdf_bytes,
+                    registration_id=candidate.registration_id,
+                )
+                if candidate_user.phone_number:
+                    admit_card.sms_sent = await notification_service.send_admit_card_sms(
+                        phone_number=candidate_user.phone_number,
+                        candidate_name=candidate_name,
+                        registration_id=candidate.registration_id,
+                        exam_date=str(exam.exam_date),
+                    )
     
     await db.commit()
     

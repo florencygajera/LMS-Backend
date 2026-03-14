@@ -3,13 +3,15 @@ Training Service API Endpoints
 Agniveer Sentinel - Soldier Management LMS
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Request, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from typing import Optional
 from datetime import date, datetime
 
 from common.core.database import get_db
+from common.core.audit import log_security_event
+from common.core.authorization import trainer_required
 from common.core.security import get_current_user
 from common.models.base import UserRole, TrainingType
 from services.auth_service.models.user import User
@@ -27,20 +29,14 @@ router = APIRouter()
 @router.post("/upload", response_model=TrainingUploadResponse)
 async def upload_training_excel(
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
+    request: Request = None,
+    current_user: User = Depends(trainer_required),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Upload Excel sheet with training data
     Trainers upload daily training performance data
     """
-    # Check if user is trainer or admin
-    if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN, UserRole.SUPER_ADMIN]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only trainers and admins can upload training data"
-        )
-    
     # Validate file type
     if not file.filename.endswith(('.xlsx', '.xls')):
         raise HTTPException(
@@ -59,6 +55,16 @@ async def upload_training_excel(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=result["error"]
         )
+
+    await log_security_event(
+        db,
+        action="training_excel_uploaded",
+        request=request,
+        user=current_user,
+        resource_type="training_upload",
+        details=f"processed={result['processed']} failed={result['failed']}",
+    )
+    await db.commit()
     
     return TrainingUploadResponse(
         success=True,
@@ -71,17 +77,10 @@ async def upload_training_excel(
 @router.post("/records", response_model=TrainingRecordResponse)
 async def create_single_training_record(
     record_data: TrainingRecordCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(trainer_required),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a single training record"""
-    # Verify trainer
-    if current_user.role not in [UserRole.TRAINER, UserRole.ADMIN, UserRole.SUPER_ADMIN]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only trainers can create training records"
-        )
-    
     # Verify soldier exists
     result = await db.execute(select(Soldier).where(Soldier.id == record_data.soldier_id))
     soldier = result.scalar_one_or_none()

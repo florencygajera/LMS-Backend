@@ -63,10 +63,10 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db():
-    """Initialize database tables"""
+    """Initialize database connectivity for service startup."""
     import_models()
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(lambda sync_conn: None)
 
 
 async def drop_db():

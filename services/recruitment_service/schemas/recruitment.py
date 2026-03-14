@@ -111,6 +111,19 @@ class ApplicationResponse(BaseModel):
         from_attributes = True
 
 
+class ApplicationVerificationRequest(BaseModel):
+    """Schema for application verification."""
+
+    recruitment_batch: str = Field(..., max_length=50)
+    force_type: Optional[str] = Field(None, max_length=50)
+    trade_category: Optional[str] = Field(None, max_length=100)
+    age_eligible: bool
+    education_eligible: bool
+    physical_eligible: bool
+    documents_verified: bool
+    verification_notes: Optional[str] = None
+
+
 # Exam Center Schemas
 class ExamCenterResponse(BaseModel):
     """Exam center response schema"""

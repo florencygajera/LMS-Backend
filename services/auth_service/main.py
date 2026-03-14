@@ -4,11 +4,11 @@ Agniveer Sentinel - Military Training Platform
 """
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from common.core.config import settings
 from common.core.database import init_db
+from common.core.security_middleware import setup_security_middleware
 from services.auth_service.api.endpoints import auth
 
 
@@ -29,14 +29,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+setup_security_middleware(app)
 
 # Include routers
 app.include_router(

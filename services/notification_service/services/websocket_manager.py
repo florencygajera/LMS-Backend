@@ -4,6 +4,7 @@ Agniveer Sentinel - Real-time Notifications
 """
 
 import asyncio
+from json import JSONDecodeError
 from typing import Dict, Set, List
 from fastapi import WebSocket
 from datetime import datetime
@@ -162,8 +163,25 @@ class NotificationService:
         finally:
             self.manager.disconnect(user_id)
     
-    async def handle_message(self, user_id: int, message: dict):
+    async def handle_message(self, user_id: int, message: dict | str):
         """Handle incoming WebSocket messages"""
+        if isinstance(message, str):
+            try:
+                message = json.loads(message)
+            except JSONDecodeError:
+                await self.manager.send_personal_message(
+                    {"type": "error", "detail": "Invalid JSON payload."},
+                    user_id,
+                )
+                return
+
+        if not isinstance(message, dict):
+            await self.manager.send_personal_message(
+                {"type": "error", "detail": "Invalid message format."},
+                user_id,
+            )
+            return
+
         msg_type = message.get("type")
         
         if msg_type == "ping":
@@ -188,9 +206,15 @@ class NotificationService:
         """Trigger SOS alert"""
         await self.manager.send_sos_alert(alert_message, alert_type, battalion_id)
     
-    async def notify_soldier(self, user_id: int, title: str, body: str):
+    async def notify_soldier(
+        self,
+        user_id: int,
+        title: str,
+        body: str,
+        notification_type: str = "info",
+    ):
         """Send notification to soldier"""
-        await self.manager.send_notification(user_id, title, body)
+        await self.manager.send_notification(user_id, title, body, notification_type)
     
     async def broadcast_schedule(self, schedule: dict):
         """Broadcast training schedule update"""

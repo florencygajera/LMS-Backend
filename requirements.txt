@@ -31,6 +31,7 @@ pydantic-settings==2.5.2
 # =====================
 # Excel Processing
 # =====================
+pandas==2.2.3
 openpyxl==3.1.5
 
 # =====================
@@ -69,6 +70,15 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 bcrypt==4.2.0
 cryptography==43.0.1
+boto3==1.35.36
+hvac==2.3.0
+pillow==10.4.0
+qrcode==8.0
+reportlab==4.2.5
+opencv-python-headless==4.10.0.84
+pytesseract==0.3.13
+numpy==2.1.2
+scikit-learn==1.5.2
 
 # =====================
 # Monitoring & Logging
@@ -85,16 +95,7 @@ pytest-cov==5.0.0
 pytest-mock==3.14.0
 
 # =====================
+# Locked optional runtime packages kept here because the services import them directly.
 # OPTIONAL - Install separately if needed
 # =====================
-# PDF Generation
-# pip install reportlab==4.2.2 pillow
-
-# OCR
-# pip install opencv-python-headless pytesseract
-
-# AWS S3
-# pip install boto3
-
-# ML
-# pip install scikit-learn numpy joblib
+# joblib is pulled transitively by scikit-learn
