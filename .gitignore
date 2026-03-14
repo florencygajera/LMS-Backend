@@ -36,3 +36,24 @@ build/
 
 # Logs
 *.log
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.env.*
+!.env.example
+.venv
+venv/
+ENV/
+env/

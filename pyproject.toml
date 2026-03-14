@@ -1,0 +1,30 @@
+[tool.ruff]
+exclude = [
+    ".venv",
+    "venv",
+    "env",
+    "__pycache__",
+    ".git",
+    ".pytest_cache",
+    "htmlcov",
+    "dist",
+    "build",
+    "*.egg-info",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
