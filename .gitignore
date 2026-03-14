@@ -1,5 +1,4 @@
 # Python cache/artifacts
-
 __pycache__/
 *.py[cod]
 *$py.class
@@ -8,11 +7,10 @@ __pycache__/
 .venv/
 venv/
 env/
-1
+
 # Test & coverage
 .pytest_cache/
 .coverage
-
 .coverage.*
 htmlcov/
 coverage.xml

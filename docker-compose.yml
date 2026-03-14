@@ -55,8 +55,8 @@ services:
   # Auth Service
   auth-service:
     build:
-      context: ./services/auth_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/auth_service/Dockerfile
     container_name: agniveer_auth
     ports:
       - "8001:8001"
@@ -78,8 +78,8 @@ services:
   # Recruitment Service
   recruitment-service:
     build:
-      context: ./services/recruitment_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/recruitment_service/Dockerfile
     container_name: agniveer_recruitment
     ports:
       - "8002:8002"
@@ -100,8 +100,8 @@ services:
   # Soldier Service
   soldier-service:
     build:
-      context: ./services/soldier_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/soldier_service/Dockerfile
     container_name: agniveer_soldier
     ports:
       - "8004:8004"
@@ -119,8 +119,8 @@ services:
   # Training Service
   training-service:
     build:
-      context: ./services/training_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/training_service/Dockerfile
     container_name: agniveer_training
     ports:
       - "8006:8006"
@@ -138,8 +138,8 @@ services:
   # Notification Service
   notification-service:
     build:
-      context: ./services/notification_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/notification_service/Dockerfile
     container_name: agniveer_notification
     ports:
       - "8009:8009"
@@ -154,8 +154,8 @@ services:
   # Weather Service
   weather-service:
     build:
-      context: ./services/weather_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/weather_service/Dockerfile
     container_name: agniveer_weather
     ports:
       - "8011:8011"
