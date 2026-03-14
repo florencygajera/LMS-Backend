@@ -6,6 +6,7 @@ Agniveer Sentinel - Enterprise Production
 import logging
 import os
 import time
+from urllib.parse import parse_qs
 from typing import Callable
 
 import redis
@@ -99,8 +100,16 @@ class LoginAttemptMiddleware(BaseHTTPMiddleware):
         client_ip = request.client.host if request.client else "unknown"
         username = "unknown"
         try:
-            form = await request.form()
-            username = str(form.get("username") or form.get("email") or "unknown").strip().lower()
+            body = await request.body()
+            parsed = parse_qs(body.decode("utf-8"))
+            username = str(
+                (parsed.get("username") or parsed.get("email") or ["unknown"])[0]
+            ).strip().lower()
+
+            async def receive():
+                return {"type": "http.request", "body": body, "more_body": False}
+
+            request._receive = receive
         except Exception:
             pass
 
