@@ -33,10 +33,8 @@ spacy==3.8.2
 # =====================
 # OCR
 # =====================
-paddlepaddle==2.6.1
-paddleocr==2.9.1
 pytesseract==0.3.13
-easyocr==1.8.0
+easyocr==1.7.2
 opencv-python-headless==4.10.0.84
 
 # =====================
