@@ -72,3 +72,42 @@ class VectorStore:
         
         return []
     
+    def save(self, path: Path):
+        """Save vector store to disk"""
+        if self._faiss is not None and self.index.ntotal > 0:
+            faiss.write_index(self.index, str(path / "index.faiss"))
+        
+        with open(path / "metadata.pkl", 'wb') as f:
+            pickle.dump(self.metadata, f)
+        
+        if self.embeddings is not None:
+            np.save(path / "embeddings.npy", self.embeddings)
+    
+    def load(self, path: Path):
+        """Load vector store from disk"""
+        if self._faiss is not None:
+            try:
+                self.index = faiss.read_index(str(path / "index.faiss"))
+            except:
+                pass
+        
+        try:
+            with open(path / "metadata.pkl", 'rb') as f:
+                self.metadata = pickle.load(f)
+        except:
+            self.metadata = []
+        
+        try:
+            self.embeddings = np.load(path / "embeddings.npy")
+        except:
+            pass
+    
+    def is_empty(self) -> bool:
+        """Check if store is empty"""
+        if self._faiss is not None:
+            return self.index.ntotal == 0
+        return self.embeddings is None or len(self.embeddings) == 0
+
+
+# Singleton instance
+vector_store = VectorStore()
