@@ -3,7 +3,7 @@ Recruitment Service Schemas
 Agniveer Sentinel - Phase 1: Recruitment System
 """
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime, date
 from common.models.base import ApplicationStatus
@@ -69,8 +69,7 @@ class CandidateResponse(CandidateBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Document Schemas
@@ -81,8 +80,7 @@ class DocumentUploadResponse(BaseModel):
     file_url: str
     file_name: str
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Application Schemas
@@ -107,8 +105,7 @@ class ApplicationResponse(BaseModel):
     overall_eligible: bool
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ApplicationVerificationRequest(BaseModel):
@@ -138,8 +135,7 @@ class ExamCenterResponse(BaseModel):
     current_booked: int
     is_active: bool
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Exam Schemas
@@ -158,8 +154,7 @@ class ExamResponse(BaseModel):
     passing_marks: int
     is_published: bool
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Exam Registration Schemas
@@ -174,8 +169,7 @@ class ExamRegistrationResponse(BaseModel):
     marks_obtained: Optional[float]
     result_status: Optional[str]
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Admit Card Schemas
@@ -196,8 +190,7 @@ class AdmitCardResponse(BaseModel):
     email_sent: bool
     sms_sent: bool
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Application Status Schema

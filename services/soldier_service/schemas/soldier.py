@@ -3,7 +3,7 @@ Soldier Service Schemas
 Agniveer Sentinel - Phase 2: Soldier Management LMS
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime, date
 from common.models.base import TrainingType, PaymentStatus
@@ -64,8 +64,7 @@ class SoldierResponse(SoldierBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Battalion Schemas
@@ -93,8 +92,7 @@ class BattalionResponse(BattalionBase):
     is_active: bool
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Medical Record Schemas
@@ -123,8 +121,7 @@ class MedicalRecordResponse(MedicalRecordBase):
     is_active: bool
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Training Record Schemas
@@ -159,8 +156,7 @@ class TrainingRecordResponse(TrainingRecordBase):
     trainer_id: Optional[int]
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Schedule Schemas
@@ -185,8 +181,7 @@ class DailyScheduleResponse(DailyScheduleBase):
     is_completed: bool
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Equipment Schemas
@@ -212,8 +207,7 @@ class EquipmentResponse(EquipmentBase):
     soldier_id: int
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Event Schemas
@@ -240,8 +234,7 @@ class SoldierEventResponse(SoldierEventBase):
     soldier_id: int
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Stipend Schemas
@@ -264,8 +257,7 @@ class StipendResponse(StipendBase):
     transaction_id: Optional[str]
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Ranking Schemas
@@ -284,8 +276,7 @@ class PerformanceRankingResponse(BaseModel):
     overall_score: float
     rank: int
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # SOS Alert Schemas
@@ -307,5 +298,4 @@ class SOSAlertResponse(BaseModel):
     resolved_at: Optional[datetime]
     battalion_id: Optional[int]
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

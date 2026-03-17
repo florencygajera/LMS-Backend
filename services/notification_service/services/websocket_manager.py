@@ -7,7 +7,7 @@ import asyncio
 from json import JSONDecodeError
 from typing import Dict, Set, List
 from fastapi import WebSocket
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 
@@ -79,7 +79,7 @@ class ConnectionManager:
             "type": "sos_alert",
             "alert_type": alert_type,
             "message": alert_message,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "battalion_id": battalion_id
         }
         
@@ -99,7 +99,7 @@ class ConnectionManager:
             "notification_type": notification_type,
             "title": title,
             "body": body,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
         await self.send_personal_message(message, user_id)
@@ -113,7 +113,7 @@ class ConnectionManager:
         message = {
             "type": "training_schedule",
             "schedule": schedule,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
         await self.send_personal_message(message, user_id)
@@ -127,7 +127,7 @@ class ConnectionManager:
         message = {
             "type": "weather_alert",
             "weather": weather_data,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
         await self.send_personal_message(message, user_id)
@@ -221,7 +221,7 @@ class NotificationService:
         message = {
             "type": "training_schedule",
             "schedule": schedule,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         await self.manager.broadcast(message)
     
@@ -234,7 +234,7 @@ class NotificationService:
         message = {
             "type": "weather_alert",
             "weather": weather_data,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
         # Send to battalion room

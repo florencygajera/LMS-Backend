@@ -3,7 +3,7 @@ Training Service Schemas
 Agniveer Sentinel - Soldier Management LMS
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime, date
 from common.models.base import TrainingType
@@ -40,8 +40,7 @@ class TrainingRecordResponse(TrainingRecordBase):
     trainer_id: Optional[int]
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TrainingUploadResponse(BaseModel):
