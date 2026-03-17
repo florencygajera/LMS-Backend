@@ -1,0 +1,68 @@
+# AgniAssist Requirements
+# AI Services for Agniveer LMS
+
+# =====================
+# Web Framework
+# =====================
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-multipart==0.0.9
+
+# =====================
+# Core ML/AI
+# =====================
+
+# Sentence Transformers for embeddings
+sentence-transformers==3.0.1
+
+# Scikit-learn for ML
+scikit-learn==1.5.2
+
+# Transformers for GenAI
+transformers==4.45.1
+torch==2.5.1
+
+# FAISS for vector storage
+faiss-cpu==1.8.0
+
+# =====================
+# NLP
+# =====================
+spacy==3.8.2
+
+# =====================
+# OCR
+# =====================
+paddlepaddle==2.6.1
+paddleocr==2.9.1
+pytesseract==0.3.13
+easyocr==1.8.0
+opencv-python-headless==4.10.0.84
+
+# =====================
+# Image Processing
+# =====================
+Pillow==10.4.0
+
+# =====================
+# Utilities
+# =====================
+numpy==2.1.2
+pandas==2.2.3
+
+# =====================
+# Security
+# =====================
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# =====================
+# Database (optional)
+# =====================
+# sqlalchemy==2.0.35
+# asyncpg==0.29.0
+
+# =====================
+# Logging
+# =====================
+python-json-logger==2.0.7
