@@ -8,9 +8,9 @@ from pydantic import BaseModel
 from typing import Optional
 
 try:
-    from agniassist.main import verify_token
+    from agniassist.security import verify_token
 except ModuleNotFoundError:
-    from main import verify_token
+    from security import verify_token
 
 router = APIRouter()
 
