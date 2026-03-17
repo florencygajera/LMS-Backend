@@ -7,7 +7,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 
-from agniassist.main import verify_token
+try:
+    from agniassist.main import verify_token
+except ModuleNotFoundError:
+    from main import verify_token
 
 router = APIRouter()
 

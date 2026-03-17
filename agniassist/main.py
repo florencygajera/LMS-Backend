@@ -129,7 +129,11 @@ app.add_middleware(
 
 
 # Import and include routers
-from agniassist.routers import rag, ocr, predict, summarize
+try:
+    from agniassist.routers import rag, ocr, predict, summarize
+except ModuleNotFoundError:
+    # Fallback for running from within agniassist directory
+    from routers import rag, ocr, predict, summarize
 
 app.include_router(rag.router, prefix="/api", tags=["RAG Chatbot"])
 app.include_router(ocr.router, prefix="/api", tags=["OCR Processing"])
