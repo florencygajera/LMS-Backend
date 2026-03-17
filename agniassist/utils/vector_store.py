@@ -47,7 +47,7 @@ class VectorStore:
     
     def search(self, query_vector: np.ndarray, k: int = 5) -> List[Tuple[dict, float]]:
         """Search for top k similar vectors"""
-        if self._faiss is not None and self.index.ntotal > 0:
+        if self._faiss is not None and self.index is not None and self.index.ntotal > 0:
             query = np.array([query_vector]).astype('float32')
             distances, indices = self.index.search(query, min(k, self.index.ntotal))
             
@@ -74,8 +74,8 @@ class VectorStore:
     
     def save(self, path: Path):
         """Save vector store to disk"""
-        if self._faiss is not None and self.index.ntotal > 0:
-            faiss.write_index(self.index, str(path / "index.faiss"))
+        if self._faiss is not None and self.index is not None:
+            self._faiss.write_index(self.index, str(path / "index.faiss"))
         
         with open(path / "metadata.pkl", 'wb') as f:
             pickle.dump(self.metadata, f)
@@ -87,7 +87,7 @@ class VectorStore:
         """Load vector store from disk"""
         if self._faiss is not None:
             try:
-                self.index = faiss.read_index(str(path / "index.faiss"))
+                self.index = self._faiss.read_index(str(path / "index.faiss"))
             except:
                 pass
         
@@ -104,7 +104,7 @@ class VectorStore:
     
     def is_empty(self) -> bool:
         """Check if store is empty"""
-        if self._faiss is not None:
+        if self._faiss is not None and self.index is not None:
             return self.index.ntotal == 0
         return self.embeddings is None or len(self.embeddings) == 0
 

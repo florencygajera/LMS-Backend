@@ -5,6 +5,7 @@ Security utilities for AgniAssist
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+# Initialize security - export for use in main.py
 security = HTTPBearer()
 
 

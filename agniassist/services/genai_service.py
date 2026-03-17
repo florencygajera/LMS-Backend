@@ -31,28 +31,33 @@ class GenAIService:
             return
         
         try:
-            # Try FLAN-T5 (small, efficient)
+            # Try FLAN-T5 (small, efficient) - use text2text generation
             model_name = "google/flan-t5-small"
             self.tokenizer = AutoTokenizer.from_pretrained(model_name)
             self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+            # Use text2text-generation task and wrap for summarization
             self.summarizer = pipeline(
-                "summarization",
+                "text2text-generation",
                 model=self.model,
-                tokenizer=self.tokenizer
+                tokenizer=self.tokenizer,
+                max_length=512,
+                truncation=True
             )
-            logger.info("✅ FLAN-T5 model loaded")
+            logger.info("✅ FLAN-T5 model loaded for summarization")
         except Exception as e:
             logger.warning(f"Could not load FLAN-T5: {e}")
             
             try:
-                # Fallback to smaller model
+                # Fallback to smaller model - use text2text-generation
                 self.summarizer = pipeline(
-                    "summarization",
-                    model="sshleifer/distilbart-cnn-12-6"
+                    "text2text-generation",
+                    model="sshleifer/distilbart-cnn-12-6",
+                    max_length=512,
+                    truncation=True
                 )
                 logger.info("✅ DistilBART model loaded")
-            except:
-                logger.warning("Could not load summarization model")
+            except Exception as e2:
+                logger.warning(f"Could not load summarization model: {e2}")
     
     async def summarize(self, text: str, max_length: int = 150, min_length: int = 30) -> Dict[str, Any]:
         """Summarize text"""
@@ -65,21 +70,27 @@ class GenAIService:
             if len(text.split()) > 1024:
                 text = " ".join(text.split()[:1024])
             
+            # Format prompt for text2text generation
+            prompt = f"Summarize: {text}"
+            
             result = self.summarizer(
-                text,
+                prompt,
                 max_length=max_length,
                 min_length=min_length,
-                do_sample=False
+                do_sample=False,
+                truncation=True
             )
             
-            summary = result[0]['summary_text']
+            # Handle both output formats (text2text-generation vs summarization)
+            summary = result[0].get('generated_text', result[0].get('summary_text', ''))
             
             return {
                 "success": True,
                 "summary": summary,
                 "original_length": len(text.split()),
                 "summary_length": len(summary.split()),
-                "compression_ratio": len(summary.split()) / len(text.split())
+                "compression_ratio": len(summary.split()) / max(len(text.split()), 1),
+                "method": "generative"
             }
         
         except Exception as e:
@@ -99,6 +110,7 @@ class GenAIService:
                 "summary": text[:max_length],
                 "original_length": len(text.split()),
                 "summary_length": len(text[:max_length].split()),
+                "compression_ratio": len(text[:max_length].split()) / max(len(text.split()), 1),
                 "method": "truncation"
             }
         
@@ -137,6 +149,7 @@ class GenAIService:
             "summary": summary,
             "original_length": len(text.split()),
             "summary_length": len(summary.split()),
+            "compression_ratio": len(summary.split()) / max(len(text.split()), 1),
             "method": "extractive"
         }
     

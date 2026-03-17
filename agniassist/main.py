@@ -17,7 +17,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import hashlib
@@ -31,8 +31,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger("AgniAssist")
 
-# Initialize security
-security = HTTPBearer()
+# Initialize security - import from security module
+try:
+    from agniassist.security import security, verify_token
+except ModuleNotFoundError:
+    from security import security, verify_token
 
 # API Storage path
 DATA_DIR = Path("agniassist_data")
@@ -66,21 +69,6 @@ def log_activity(endpoint: str, input_data: Dict, output_data: Dict):
     
     with open(ACTIVITY_LOG, 'w') as f:
         json.dump(logs, f, indent=2)
-
-
-async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify authentication token - military grade security"""
-    token = credentials.credentials
-    
-    # In production, validate against internal auth system
-    # For demo, accept any token starting with valid prefix
-    if not token or len(token) < 8:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication token"
-        )
-    
-    return {"token": token, "verified": True}
 
 
 @asynccontextmanager
