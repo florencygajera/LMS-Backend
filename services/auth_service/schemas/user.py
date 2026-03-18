@@ -3,7 +3,7 @@ User Schemas
 Agniveer Sentinel - Auth Service
 """
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from common.models.base import UserRole
@@ -43,8 +43,7 @@ class UserResponse(UserBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserLogin(BaseModel):
@@ -95,5 +94,4 @@ class AuditLogResponse(BaseModel):
     created_at: datetime
     status: str
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

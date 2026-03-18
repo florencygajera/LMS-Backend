@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from common.core.database import get_db
@@ -116,7 +116,7 @@ async def login(
     
     # Reset failed login attempts
     user.failed_login_attempts = 0
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(timezone.utc)
     
     # Generate tokens
     access_token = create_access_token(data={"sub": str(user.id)})
@@ -126,7 +126,7 @@ async def login(
     refresh_token_obj = RefreshToken(
         user_id=user.id,
         token=refresh_token,
-        expires_at=datetime.utcnow() + timedelta(days=7),
+        expires_at=datetime.now(timezone.utc) + timedelta(days=7),
         device_info=form_data.client_id
     )
     db.add(refresh_token_obj)
@@ -284,7 +284,7 @@ async def change_password(
     
     # Update password
     current_user.hashed_password = get_password_hash(password_data.new_password)
-    current_user.password_changed_at = datetime.utcnow()
+    current_user.password_changed_at = datetime.now(timezone.utc)
     
     # Log password change
     audit_log = AuditLog(

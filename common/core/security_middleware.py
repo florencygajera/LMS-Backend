@@ -14,13 +14,13 @@ from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
-from pythonjsonlogger import jsonlogger
+from pythonjsonlogger import json
 
 
 logger = logging.getLogger("agniveer.audit")
 if not logger.handlers:
     handler = logging.StreamHandler()
-    handler.setFormatter(jsonlogger.JsonFormatter())
+    handler.setFormatter(json.JsonFormatter())
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 

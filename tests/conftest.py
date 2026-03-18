@@ -4,7 +4,7 @@ Agniveer Sentinel - Enterprise Production
 """
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -52,9 +52,9 @@ class FakeAsyncSession:
         if hasattr(instance, "uuid") and getattr(instance, "uuid", None) is None:
             instance.uuid = str(uuid4())
         if hasattr(instance, "created_at") and getattr(instance, "created_at", None) is None:
-            instance.created_at = datetime.utcnow()
+            instance.created_at = datetime.now(timezone.utc)
         if hasattr(instance, "updated_at") and getattr(instance, "updated_at", None) is None:
-            instance.updated_at = datetime.utcnow()
+            instance.updated_at = datetime.now(timezone.utc)
         if isinstance(instance, User):
             if instance.is_active is None:
                 instance.is_active = True
