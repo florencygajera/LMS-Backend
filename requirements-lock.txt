@@ -23,7 +23,7 @@ aiosmtplib==3.0.1
 email-validator==2.2.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
-bcrypt==4.2.0
+bcrypt==4.2.1
 cryptography==43.0.1
 boto3==1.35.36
 hvac==2.3.0
