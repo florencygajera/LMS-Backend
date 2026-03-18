@@ -8,19 +8,23 @@ import os
 import time
 from urllib.parse import parse_qs
 from typing import Callable
+import warnings
+
+# Suppress the deprecation warning for pythonjsonlogger before importing
+warnings.filterwarnings('ignore', category=DeprecationWarning, module='pythonjsonlogger.jsonlogger')
 
 import redis
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
-from pythonjsonlogger import json
+from pythonjsonlogger import jsonlogger
 
 
 logger = logging.getLogger("agniveer.audit")
 if not logger.handlers:
     handler = logging.StreamHandler()
-    handler.setFormatter(json.JsonFormatter())
+    handler.setFormatter(jsonlogger.JsonFormatter())
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
