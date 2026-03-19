@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import date
+from json import JSONDecodeError
 import json
 
 from common.core.security import get_current_user
@@ -19,6 +20,15 @@ from common.core.database import get_db
 
 
 router = APIRouter()
+
+@router.get("/")
+async def weather_service_test():
+    return {"message": "weather service working"}
+
+
+@router.get("/health")
+async def weather_health():
+    return {"status": "healthy", "service": "weather"}
 
 
 class ScheduleAdjustmentRequest(BaseModel):
@@ -180,8 +190,11 @@ async def auto_adjust_soldier_schedule(
     # Parse activities
     try:
         activities = json.loads(schedule_record.activities)
-    except:
-        activities = []
+    except JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Stored schedule activities are invalid JSON: {exc.msg}",
+        ) from exc
     
     # Adjust schedule
     result = await weather_service.adjust_schedule(activities, location)

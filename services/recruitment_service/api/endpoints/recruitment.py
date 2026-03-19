@@ -37,6 +37,15 @@ from services.recruitment_service.services.admit_card_service import (
 
 router = APIRouter()
 
+@router.get("/")
+async def recruitment_service_test():
+    return {"message": "recruitment service working"}
+
+
+@router.get("/health")
+async def recruitment_health():
+    return {"status": "healthy", "service": "recruitment"}
+
 
 def generate_registration_id() -> str:
     """Generate unique registration ID"""

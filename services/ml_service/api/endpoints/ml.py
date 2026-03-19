@@ -19,6 +19,15 @@ from services.ml_service.models.performance_prediction import (
 
 router = APIRouter()
 
+@router.get("/")
+async def ml_service_test():
+    return {"message": "ml service working"}
+
+
+@router.get("/health")
+async def ml_health():
+    return {"status": "healthy", "service": "ml"}
+
 
 class PerformancePredictionRequest(BaseModel):
     """Request for performance prediction"""

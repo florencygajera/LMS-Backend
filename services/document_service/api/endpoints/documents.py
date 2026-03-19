@@ -11,6 +11,15 @@ from services.document_service.services.ocr_service import ocr_service
 
 router = APIRouter()
 
+@router.get("/")
+async def document_service_test():
+    return {"message": "document service working"}
+
+
+@router.get("/health")
+async def document_health():
+    return {"status": "healthy", "service": "documents"}
+
 
 @router.post("/ocr")
 async def process_document_ocr(

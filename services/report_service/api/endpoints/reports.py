@@ -22,6 +22,15 @@ from services.report_service.services.report_generator import pdf_generator
 
 router = APIRouter()
 
+@router.get("/")
+async def report_service_test():
+    return {"message": "report service working"}
+
+
+@router.get("/health")
+async def report_health():
+    return {"status": "healthy", "service": "reports"}
+
 
 @router.get("/soldier/{soldier_id}/daily")
 async def generate_daily_report(

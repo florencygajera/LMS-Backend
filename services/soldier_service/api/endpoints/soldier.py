@@ -45,6 +45,15 @@ from services.soldier_service.schemas.soldier import (
 
 router = APIRouter()
 
+@router.get("/")
+async def soldier_service_test():
+    return {"message": "soldier service working"}
+
+
+@router.get("/health")
+async def soldier_health():
+    return {"status": "healthy", "service": "soldier"}
+
 
 def generate_soldier_id() -> str:
     """Generate unique soldier ID"""

@@ -21,6 +21,15 @@ from services.notification_service.services.websocket_manager import notificatio
 
 router = APIRouter()
 
+@router.get("/")
+async def notification_service_test():
+    return {"message": "notification service working"}
+
+
+@router.get("/health")
+async def notifications_health():
+    return {"status": "healthy", "service": "notifications"}
+
 
 # WebSocket endpoint
 @router.websocket("/ws/notifications")

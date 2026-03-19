@@ -25,6 +25,15 @@ from services.training_service.schemas.training import (
 
 router = APIRouter()
 
+@router.get("/")
+async def training_service_test():
+    return {"message": "training service working"}
+
+
+@router.get("/health")
+async def training_health():
+    return {"status": "healthy", "service": "training"}
+
 
 @router.post("/upload", response_model=TrainingUploadResponse)
 async def upload_training_excel(
