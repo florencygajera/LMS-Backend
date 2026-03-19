@@ -65,9 +65,33 @@ class TimestampMixin:
 def import_models() -> None:
     """Import SQLAlchemy models so they are registered in Base metadata."""
     # Importing model modules ensures Base.metadata knows all tables before create_all.
-    from services.auth_service.models import user as _auth_models  # noqa: F401
-    from services.recruitment_service.models import recruitment as _recruitment_models  # noqa: F401
-    from services.soldier_service.models import soldier as _soldier_models  # noqa: F401
+    # Import from the model files directly to ensure they register with Base
+    from services.auth_service.models.user import User, AuditLog, RefreshToken  # noqa: F401
+    from services.recruitment_service.models.recruitment import (  # noqa: F401
+        Candidate,
+        CandidateDocument,
+        Application,
+        ExamCenter,
+        Exam,
+        ExamQuestion,
+        ExamRegistration,
+        AdmitCard,
+    )
+    from services.soldier_service.models.soldier import (  # noqa: F401
+        Soldier,
+        SoldierDocument,
+        Battalion,
+        BattalionPosting,
+        MedicalRecord,
+        MedicalAttachment,
+        TrainingRecord,
+        DailySchedule,
+        Equipment,
+        SoldierEvent,
+        Stipend,
+        PerformanceRanking,
+        SOSAlert,
+    )
     
     # Training service uses soldier models (TrainingRecord is in soldier.py)
     # Report service generates reports from existing data
