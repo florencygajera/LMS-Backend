@@ -13,12 +13,22 @@ from common.core.config import settings
 
 def get_engine():
     """Create engine dynamically to pick up config changes"""
+    
+    # SQLite doesn't support pool_size and max_overflow
+    is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+    
+    engine_kwargs = {
+        "echo": settings.DEBUG,
+        "pool_pre_ping": not is_sqlite,
+    }
+    
+    if not is_sqlite:
+        engine_kwargs["pool_size"] = 10
+        engine_kwargs["max_overflow"] = 20
+    
     return create_async_engine(
         settings.DATABASE_URL,
-        echo=settings.DEBUG,
-        pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=20,
+        **engine_kwargs
     )
 
 
