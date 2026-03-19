@@ -38,14 +38,21 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "agniveer_db"
     
+    # Use SQLite for local testing (set USE_SQLITE=true in .env)
+    USE_SQLITE: bool = False
+    
     @property
     def DATABASE_URL(self) -> str:
         """Construct database URL"""
+        if self.USE_SQLITE:
+            return "sqlite+aiosqlite:///./agniveer.db"
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
     
     @property
     def DATABASE_URL_SYNC(self) -> str:
         """Synchronous database URL"""
+        if self.USE_SQLITE:
+            return "sqlite:///./agniveer.db"
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
     
     # Redis
@@ -112,6 +119,17 @@ class Settings(BaseSettings):
             if normalized in {"debug", "development", "dev", "true", "1", "yes", "on"}:
                 return True
             if normalized in {"release", "production", "prod", "false", "0", "no", "off"}:
+                return False
+        return value
+    
+    @field_validator("USE_SQLITE", mode="before")
+    @classmethod
+    def parse_sqlite(cls, value):
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "1", "yes", "on"}:
+                return True
+            if normalized in {"false", "0", "no", "off"}:
                 return False
         return value
 

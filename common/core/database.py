@@ -11,23 +11,44 @@ from typing import AsyncGenerator
 from common.core.config import settings
 
 
-# Create async engine
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DEBUG,
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
-)
+def get_engine():
+    """Create engine dynamically to pick up config changes"""
+    return create_async_engine(
+        settings.DATABASE_URL,
+        echo=settings.DEBUG,
+        pool_pre_ping=True,
+        pool_size=10,
+        max_overflow=20,
+    )
+
+
+# Create async engine (lazy initialization)
+_engine = None
+
+def get_db_engine():
+    """Lazy initialization of database engine"""
+    global _engine
+    if _engine is None:
+        _engine = get_engine()
+    return _engine
+
 
 # Create async session factory
-AsyncSessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autocommit=False,
-    autoflush=False,
-)
+AsyncSessionLocal = None
+
+def get_async_session_local():
+    """Get or create the async session factory"""
+    global AsyncSessionLocal
+    if AsyncSessionLocal is None:
+        engine = get_db_engine()
+        AsyncSessionLocal = async_sessionmaker(
+            engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+            autocommit=False,
+            autoflush=False,
+        )
+    return AsyncSessionLocal
 
 
 class Base(DeclarativeBase):
@@ -58,7 +79,8 @@ def import_models() -> None:
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency for getting database session"""
-    async with AsyncSessionLocal() as session:
+    session_factory = get_async_session_local()
+    async with session_factory() as session:
         try:
             yield session
             await session.commit()
@@ -72,6 +94,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def init_db():
     """Initialize database connectivity for service startup."""
     import_models()
+    engine = get_db_engine()
     async with engine.begin() as conn:
         await conn.run_sync(lambda sync_conn: None)
 
@@ -79,5 +102,15 @@ async def init_db():
 async def drop_db():
     """Drop all database tables"""
     import_models()
+    engine = get_db_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+
+# Backward compatibility - module level attributes
+def __getattr__(name):
+    if name == "engine":
+        return get_db_engine()
+    if name == "AsyncSessionLocal":
+        return get_async_session_local()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
