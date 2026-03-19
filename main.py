@@ -1,7 +1,7 @@
 """
-Agniveer Sentinel - Unified Main Application
-Combines all microservices into a single FastAPI application
+Agniveer Sentinel - Unified Main Application (Clean Version)
 """
+
 import os
 os.environ['USE_SQLITE'] = 'true'
 
@@ -9,45 +9,46 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+import traceback
 
-# Configure logging
+# ================= LOGGING =================
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger("Agniveer")
 
-# Settings
+# ================= SETTINGS =================
 from common.core.config import settings
 from common.core.database import init_db
 
 
+# ================= LIFESPAN =================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan events"""
-    logger.info("Agniveer Sentinel Starting Up...")
-    
-    # Initialize database
-    await init_db()
-    logger.info("Database initialized")
-    
-    # NOTE: AI Services (RAG, ML) are lazy-loaded on first request
-    # to speed up startup time
-    
-    logger.info("Agniveer Ready")
+    logger.info("🚀 Agniveer Starting...")
+
+    try:
+        await init_db()
+        logger.info("✅ Database initialized")
+    except Exception as e:
+        logger.error("❌ Database init failed")
+        traceback.print_exc()
+
     yield
-    logger.info("Agniveer Shutting Down...")
+
+    logger.info("🛑 Agniveer Shutting down...")
 
 
-# Create FastAPI application
+# ================= APP =================
 app = FastAPI(
     title="Agniveer Sentinel",
-    description="Military Training Platform - All Services",
     version="1.0.0",
+    description="Military Training Platform - Unified API",
     lifespan=lifespan
 )
 
-# CORS middleware - allow all origins for development
+# ================= CORS =================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -57,165 +58,140 @@ app.add_middleware(
 )
 
 
-# ============== Include All Service Routers ==============
+# ================= ROUTER LOADER FUNCTION =================
+def include_router_safe(import_path: str, router_name: str, prefix: str, tag: str):
+    try:
+        module = __import__(import_path, fromlist=[router_name])
+        router = getattr(module, router_name)
 
-# Auth Service
-try:
-    from services.auth_service.api.endpoints import auth as auth_router
-    app.include_router(
-        auth_router.router,
-        prefix=f"{settings.API_V1_PREFIX}/auth",
-        tags=["Auth Service"]
-    )
-    logger.info("Auth Service router included")
-except Exception as e:
-    logger.warning(f"Could not include Auth Service: {e}")
+        app.include_router(
+            router,
+            prefix=prefix,
+            tags=[tag]
+        )
 
-# Recruitment Service
-try:
-    from services.recruitment_service.api.endpoints import recruitment as recruitment_router
-    app.include_router(
-        recruitment_router.router,
-        prefix=f"{settings.API_V1_PREFIX}/recruitment",
-        tags=["Recruitment Service"]
-    )
-    logger.info("Recruitment Service router included")
-except Exception as e:
-    logger.warning(f"Could not include Recruitment Service: {e}")
+        logger.info(f"✅ {tag} loaded at {prefix}")
 
-# Soldier Service
-try:
-    from services.soldier_service.api.endpoints import soldier as soldier_router
-    app.include_router(
-        soldier_router.router,
-        prefix=f"{settings.API_V1_PREFIX}/soldier",
-        tags=["Soldier Service"]
-    )
-    logger.info("Soldier Service router included")
-except Exception as e:
-    logger.warning(f"Could not include Soldier Service: {e}")
-
-# Training Service
-try:
-    from services.training_service.api.endpoints import training as training_router
-    app.include_router(
-        training_router.router,
-        prefix=f"{settings.API_V1_PREFIX}/training",
-        tags=["Training Service"]
-    )
-    logger.info("Training Service router included")
-except Exception as e:
-    logger.warning(f"Could not include Training Service: {e}")
-
-# Notification Service
-try:
-    from services.notification_service.api.endpoints import notifications as notification_router
-    app.include_router(
-        notification_router.router,
-        prefix=f"{settings.API_V1_PREFIX}/notifications",
-        tags=["Notification Service"]
-    )
-    logger.info("Notification Service router included")
-except Exception as e:
-    logger.warning(f"Could not include Notification Service: {e}")
-
-# Report Service
-try:
-    from services.report_service.api.endpoints import reports as report_router
-    app.include_router(
-        report_router.router,
-        prefix=f"{settings.API_V1_PREFIX}/reports",
-        tags=["Report Service"]
-    )
-    logger.info("Report Service router included")
-except Exception as e:
-    logger.warning(f"Could not include Report Service: {e}")
-
-# ML Service
-try:
-    from services.ml_service.api.endpoints import ml as ml_router
-    app.include_router(
-        ml_router.router,
-        prefix=f"{settings.API_V1_PREFIX}/ml",
-        tags=["ML Service"]
-    )
-    logger.info("ML Service router included")
-except Exception as e:
-    logger.warning(f"Could not include ML Service: {e}")
-
-# Document Service
-try:
-    from services.document_service.api.endpoints import documents as document_router
-    app.include_router(
-        document_router.router,
-        prefix=f"{settings.API_V1_PREFIX}/documents",
-        tags=["Document Service"]
-    )
-    logger.info("Document Service router included")
-except Exception as e:
-    logger.warning(f"Could not include Document Service: {e}")
-
-# Weather Service
-try:
-    from services.weather_service.api.endpoints import weather as weather_router
-    app.include_router(
-        weather_router.router,
-        prefix=f"{settings.API_V1_PREFIX}/weather",
-        tags=["Weather Service"]
-    )
-    logger.info("Weather Service router included")
-except Exception as e:
-    logger.warning(f"Could not include Weather Service: {e}")
-
-# AgniAssist AI Services (RAG, OCR, Predict, Summarize)
-try:
-    from agniassist.routers import rag, ocr, predict, summarize
-    app.include_router(rag.router, prefix="/api", tags=["AI - RAG Chatbot"])
-    app.include_router(ocr.router, prefix="/api", tags=["AI - OCR Processing"])
-    app.include_router(predict.router, prefix="/api", tags=["AI - ML Prediction"])
-    app.include_router(summarize.router, prefix="/api", tags=["AI - Summarization"])
-    logger.info("AgniAssist AI routers included")
-except Exception as e:
-    logger.warning(f"Could not include AgniAssist: {e}")
+    except Exception:
+        logger.error(f"❌ Failed to load {tag}")
+        traceback.print_exc()
 
 
-# ============== Health Check Endpoints ==============
+# ================= INCLUDE ALL SERVICES =================
 
+API_PREFIX = settings.API_V1_PREFIX  # usually /api/v1
+
+# Core Services
+include_router_safe(
+    "services.auth_service.api.endpoints.auth",
+    "router",
+    f"{API_PREFIX}/auth",
+    "Auth Service"
+)
+
+include_router_safe(
+    "services.recruitment_service.api.endpoints.recruitment",
+    "router",
+    f"{API_PREFIX}/recruitment",
+    "Recruitment Service"
+)
+
+include_router_safe(
+    "services.soldier_service.api.endpoints.soldier",
+    "router",
+    f"{API_PREFIX}/soldier",
+    "Soldier Service"
+)
+
+include_router_safe(
+    "services.training_service.api.endpoints.training",
+    "router",
+    f"{API_PREFIX}/training",
+    "Training Service"
+)
+
+include_router_safe(
+    "services.notification_service.api.endpoints.notifications",
+    "router",
+    f"{API_PREFIX}/notifications",
+    "Notification Service"
+)
+
+include_router_safe(
+    "services.report_service.api.endpoints.reports",
+    "router",
+    f"{API_PREFIX}/reports",
+    "Report Service"
+)
+
+include_router_safe(
+    "services.ml_service.api.endpoints.ml",
+    "router",
+    f"{API_PREFIX}/ml",
+    "ML Service"
+)
+
+include_router_safe(
+    "services.document_service.api.endpoints.documents",
+    "router",
+    f"{API_PREFIX}/documents",
+    "Document Service"
+)
+
+include_router_safe(
+    "services.weather_service.api.endpoints.weather",
+    "router",
+    f"{API_PREFIX}/weather",
+    "Weather Service"
+)
+
+
+# ================= AGNIASSIST AI =================
+include_router_safe(
+    "agniassist.routers.rag",
+    "router",
+    "/api",
+    "AI - RAG Chatbot"
+)
+
+include_router_safe(
+    "agniassist.routers.ocr",
+    "router",
+    "/api",
+    "AI - OCR"
+)
+
+include_router_safe(
+    "agniassist.routers.predict",
+    "router",
+    "/api",
+    "AI - Prediction"
+)
+
+include_router_safe(
+    "agniassist.routers.summarize",
+    "router",
+    "/api",
+    "AI - Summarization"
+)
+
+
+# ================= HEALTH =================
 @app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "service": "Agniveer Sentinel",
-        "version": "1.0.0"
-    }
+async def health():
+    return {"status": "ok"}
 
 
 @app.get("/")
 async def root():
-    """Root endpoint"""
     return {
-        "service": "Agniveer Sentinel",
-        "description": "Military Training Platform - Unified API",
-        "version": "1.0.0",
-        "endpoints": {
-            "auth": f"{settings.API_V1_PREFIX}/auth",
-            "recruitment": f"{settings.API_V1_PREFIX}/recruitment",
-            "soldier": f"{settings.API_V1_PREFIX}/soldier",
-            "training": f"{settings.API_V1_PREFIX}/training",
-            "notifications": f"{settings.API_V1_PREFIX}/notifications",
-            "reports": f"{settings.API_V1_PREFIX}/reports",
-            "ml": f"{settings.API_V1_PREFIX}/ml",
-            "documents": f"{settings.API_V1_PREFIX}/documents",
-            "weather": f"{settings.API_V1_PREFIX}/weather",
-            "ai_rag": "/api/ask",
-            "ai_ocr": "/api/ocr",
-            "ai_predict": "/api/predict",
-            "ai_summarize": "/api/summarize"
-        }
+        "message": "Agniveer Sentinel Running",
+        "docs": "/docs",
+        "api_prefix": API_PREFIX
     }
 
 
+# ================= RUN =================
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", reload=True)
