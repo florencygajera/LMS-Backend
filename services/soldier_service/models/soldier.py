@@ -5,10 +5,7 @@ Agniveer Sentinel - Phase 2: Soldier Management LMS
 
 from sqlalchemy import Column, Integer, String, DateTime, Date, Enum, Boolean, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime, date, time
-import uuid
-import enum
 from common.core.database import Base
 from common.models.base import BaseModel, TrainingType, PaymentStatus
 

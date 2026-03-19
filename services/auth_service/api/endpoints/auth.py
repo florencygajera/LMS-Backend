@@ -25,6 +25,16 @@ from services.auth_service.schemas.user import (
 
 router = APIRouter()
 
+@router.get("/")
+async def auth_service_test():
+    return {"message": "auth service working"}
+
+
+@router.get("/health")
+async def auth_health():
+    return {"status": "healthy", "service": "auth"}
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     """Register a new user"""

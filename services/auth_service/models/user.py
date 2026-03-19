@@ -5,10 +5,7 @@ Agniveer Sentinel - Auth Service
 
 from sqlalchemy import Column, Integer, String, DateTime, Enum, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
-import uuid
-import enum
 from common.core.database import Base
 from common.models.base import UserRole, BaseModel
 

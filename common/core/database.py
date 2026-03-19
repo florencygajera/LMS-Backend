@@ -1,118 +1,114 @@
-"""
-Database Configuration Module
-Agniveer Sentinel - Military Training Platform
-"""
+"""Database configuration and session management."""
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base, DeclarativeBase
-from sqlalchemy import Column, Integer, DateTime
+from __future__ import annotations
+
+import logging
 from datetime import datetime
 from typing import AsyncGenerator
+
+from sqlalchemy import Column, DateTime
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
+
 from common.core.config import settings
 
 
-def get_engine():
-    """Create engine dynamically to pick up config changes"""
-    
-    # SQLite doesn't support pool_size and max_overflow
-    is_sqlite = settings.DATABASE_URL.startswith("sqlite")
-    
+logger = logging.getLogger(__name__)
+
+_DATABASE_URL = settings.DATABASE_URL
+_engine = None
+_async_session_local = None
+
+
+def _build_engine(database_url: str):
+    is_sqlite = database_url.startswith("sqlite")
     engine_kwargs = {
         "echo": settings.DEBUG,
         "pool_pre_ping": not is_sqlite,
     }
-    
     if not is_sqlite:
         engine_kwargs["pool_size"] = 10
         engine_kwargs["max_overflow"] = 20
-    
-    return create_async_engine(
-        settings.DATABASE_URL,
-        **engine_kwargs
-    )
+    return create_async_engine(database_url, **engine_kwargs)
 
 
-# Create async engine (lazy initialization)
-_engine = None
+def set_database_url(database_url: str) -> None:
+    """Switch active database URL and reset engine/session factory."""
+    global _DATABASE_URL, _engine, _async_session_local
+    _DATABASE_URL = database_url
+    _engine = None
+    _async_session_local = None
+
+
+def get_database_url() -> str:
+    return _DATABASE_URL
+
 
 def get_db_engine():
-    """Lazy initialization of database engine"""
+    """Lazy initialization of database engine."""
     global _engine
     if _engine is None:
-        _engine = get_engine()
+        _engine = _build_engine(_DATABASE_URL)
     return _engine
 
 
-# Create async session factory
-AsyncSessionLocal = None
-
 def get_async_session_local():
-    """Get or create the async session factory"""
-    global AsyncSessionLocal
-    if AsyncSessionLocal is None:
-        engine = get_db_engine()
-        AsyncSessionLocal = async_sessionmaker(
-            engine,
+    """Get or create the async session factory."""
+    global _async_session_local
+    if _async_session_local is None:
+        _async_session_local = async_sessionmaker(
+            get_db_engine(),
             class_=AsyncSession,
             expire_on_commit=False,
             autocommit=False,
             autoflush=False,
         )
-    return AsyncSessionLocal
+    return _async_session_local
 
 
 class Base(DeclarativeBase):
-    """Base class for all models"""
-    pass
+    """Base class for all models."""
 
 
 class TimestampMixin:
-    """Mixin for timestamp columns"""
+    """Mixin for timestamp columns."""
+
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 def import_models() -> None:
     """Import SQLAlchemy models so they are registered in Base metadata."""
-    # Importing model modules ensures Base.metadata knows all tables before create_all.
-    # Import from the model files directly to ensure they register with Base
-    from services.auth_service.models.user import User, AuditLog, RefreshToken  # noqa: F401
+    from services.auth_service.models.user import AuditLog, RefreshToken, User  # noqa: F401
     from services.recruitment_service.models.recruitment import (  # noqa: F401
+        AdmitCard,
+        Application,
         Candidate,
         CandidateDocument,
-        Application,
-        ExamCenter,
         Exam,
+        ExamCenter,
         ExamQuestion,
         ExamRegistration,
-        AdmitCard,
     )
     from services.soldier_service.models.soldier import (  # noqa: F401
-        Soldier,
-        SoldierDocument,
         Battalion,
         BattalionPosting,
-        MedicalRecord,
-        MedicalAttachment,
-        TrainingRecord,
         DailySchedule,
         Equipment,
-        SoldierEvent,
-        Stipend,
+        MedicalAttachment,
+        MedicalRecord,
         PerformanceRanking,
+        Soldier,
+        SoldierDocument,
+        SoldierEvent,
         SOSAlert,
+        Stipend,
+        TrainingRecord,
     )
-    
-    # Training service uses soldier models (TrainingRecord is in soldier.py)
-    # Report service generates reports from existing data
-    # Notification service uses Redis, no persistent models needed
-    # ML service uses file-based models
-    # Weather service is external API
-    # Document service stores files in S3/MinIO
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Dependency for getting database session"""
+    """FastAPI dependency for getting a database session."""
     session_factory = get_async_session_local()
     async with session_factory() as session:
         try:
@@ -125,23 +121,40 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-async def init_db():
-    """Initialize database connectivity for service startup."""
+async def _create_tables() -> None:
     import_models()
     engine = get_db_engine()
     async with engine.begin() as conn:
-        await conn.run_sync(lambda sync_conn: None)
+        await conn.run_sync(Base.metadata.create_all)
+
+
+async def init_db() -> str:
+    """
+    Initialize DB and create tables.
+    Falls back to SQLite when primary database is unavailable.
+    """
+    try:
+        await _create_tables()
+        return get_database_url()
+    except Exception:
+        sqlite_url = "sqlite+aiosqlite:///./agniveer.db"
+        if get_database_url().startswith("sqlite"):
+            logger.exception("Database initialization failed on SQLite.")
+            raise
+        logger.exception("Primary database init failed; switching to SQLite fallback.")
+        set_database_url(sqlite_url)
+        await _create_tables()
+        return get_database_url()
 
 
 async def drop_db():
-    """Drop all database tables"""
+    """Drop all database tables."""
     import_models()
     engine = get_db_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
 
-# Backward compatibility - module level attributes
 def __getattr__(name):
     if name == "engine":
         return get_db_engine()

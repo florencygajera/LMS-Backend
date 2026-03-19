@@ -5,10 +5,7 @@ Agniveer Sentinel - Phase 1: Recruitment System
 
 from sqlalchemy import Column, Integer, String, DateTime, Date, Enum, Boolean, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime, date
-import uuid
-import enum
 from common.core.database import Base
 from common.models.base import BaseModel, ApplicationStatus
 
