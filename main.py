@@ -108,7 +108,9 @@ async def standard_response_middleware(request: Request, call_next):
 
     payload = json.loads(body.decode("utf-8"))
     wrapped = _envelope_payload(payload)
-    return JSONResponse(status_code=response.status_code, content=wrapped, headers=dict(response.headers))
+    headers = dict(response.headers)
+    headers.pop("content-length", None)
+    return JSONResponse(status_code=response.status_code, content=wrapped, headers=headers)
 
 
 @app.exception_handler(HTTPException)
