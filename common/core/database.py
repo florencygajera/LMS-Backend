@@ -47,6 +47,13 @@ def import_models() -> None:
     from services.auth_service.models import user as _auth_models  # noqa: F401
     from services.recruitment_service.models import recruitment as _recruitment_models  # noqa: F401
     from services.soldier_service.models import soldier as _soldier_models  # noqa: F401
+    
+    # Training service uses soldier models (TrainingRecord is in soldier.py)
+    # Report service generates reports from existing data
+    # Notification service uses Redis, no persistent models needed
+    # ML service uses file-based models
+    # Weather service is external API
+    # Document service stores files in S3/MinIO
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
