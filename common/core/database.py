@@ -26,6 +26,9 @@ if _USE_SQLITE:
 else:
     _DATABASE_URL = settings.DATABASE_URL
 
+# DEBUG: Log the actual database URL being used
+logger.info(f"[DEBUG] Database Configuration -> USE_SQLITE={_USE_SQLITE}, DATABASE_URL={_DATABASE_URL}")
+
 _engine = None
 _async_session_local = None
 
