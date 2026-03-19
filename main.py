@@ -31,20 +31,8 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("Database initialized")
     
-    # Initialize AgniAssist services (RAG, ML, etc.)
-    try:
-        from agniassist.services.rag_service import rag_service
-        await rag_service.initialize()
-        logger.info("RAG Service initialized")
-    except Exception as e:
-        logger.warning(f"RAG Service init warning: {e}")
-    
-    try:
-        from agniassist.services.ml_service import ml_service
-        ml_service.initialize()
-        logger.info("ML Service initialized")
-    except Exception as e:
-        logger.warning(f"ML Service init warning: {e}")
+    # NOTE: AI Services (RAG, ML) are lazy-loaded on first request
+    # to speed up startup time
     
     logger.info("Agniveer Ready")
     yield
