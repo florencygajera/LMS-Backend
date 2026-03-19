@@ -1,6 +1,6 @@
 """
 Authentication Endpoints
-Agniveer Sentinel - Auth Service
+Agniveer LMS - Auth Service
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -23,9 +23,7 @@ from services.auth_service.schemas.user import (
     PasswordChange, PasswordReset, PasswordResetConfirm
 )
 
-
 router = APIRouter()
-
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
@@ -76,6 +74,7 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db)
 ):
+
     """User login endpoint"""
     # Find user by username
     result = await db.execute(select(User).where(User.username == form_data.username))
