@@ -3,6 +3,8 @@ Common Configuration Module
 Agniveer Sentinel - Military Training Platform
 """
 
+import os
+import logging
 from functools import lru_cache
 from typing import Optional
 
@@ -39,7 +41,15 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "agniveer_db"
     
     # Use SQLite for local testing (set USE_SQLITE=true in .env)
-    USE_SQLITE: bool = False
+    USE_SQLITE: bool = Field(default=False)
+
+    def __init__(self, **kwargs):
+        """Initialize settings and check USE_SQLITE env var directly."""
+        # Check USE_SQLITE from environment directly before any other processing
+        use_sqlite_env = os.environ.get("USE_SQLITE", "").strip().lower()
+        if use_sqlite_env in {"true", "1", "yes", "on"}:
+            kwargs.setdefault("USE_SQLITE", True)
+        super().__init__(**kwargs)
     
     @property
     def DATABASE_URL(self) -> str:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime
 from typing import AsyncGenerator
 
@@ -15,7 +16,16 @@ from common.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-_DATABASE_URL = settings.DATABASE_URL
+# Check USE_SQLITE at module load time
+_use_sqlite_env = os.environ.get("USE_SQLITE", "").strip().lower()
+_USE_SQLITE = _use_sqlite_env in {"true", "1", "yes", "on"} or settings.USE_SQLITE
+
+if _USE_SQLITE:
+    _DATABASE_URL = "sqlite+aiosqlite:///./agniveer.db"
+    logger.info("Using SQLite database (USE_SQLITE=true)")
+else:
+    _DATABASE_URL = settings.DATABASE_URL
+
 _engine = None
 _async_session_local = None
 
