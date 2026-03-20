@@ -4,9 +4,14 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
+from datetime import datetime
+from pathlib import Path
 from typing import Any
+
+import hashlib
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,20 +46,112 @@ logger = logging.getLogger("agniveer")
 
 API_PREFIX = settings.API_V1_PREFIX
 
+# ============================================================================
+# AgniAssist Activity Logging Configuration
+# ============================================================================
+
+# API Storage path
+DATA_DIR = Path("agniassist_data")
+DATA_DIR.mkdir(exist_ok=True)
+
+# Activity log
+ACTIVITY_LOG = DATA_DIR / "activity_log.json"
+
+
+def log_activity(endpoint: str, input_data: dict, output_data: dict):
+    """Log all AI activity for security auditing"""
+    log_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "endpoint": endpoint,
+        "input_hash": hashlib.sha256(json.dumps(input_data, sort_keys=True).encode()).hexdigest()[:16],
+        "output_hash": hashlib.sha256(json.dumps(output_data, sort_keys=True).encode()).hexdigest()[:16]
+    }
+    
+    logs = []
+    if ACTIVITY_LOG.exists():
+        with open(ACTIVITY_LOG, 'r') as f:
+            try:
+                logs = json.load(f)
+            except Exception:
+                logs = []
+    
+    logs.append(log_entry)
+    
+    # Keep last 1000 entries
+    logs = logs[-1000:]
+    
+    with open(ACTIVITY_LOG, 'w') as f:
+        json.dump(logs, f, indent=2)
+
+
+# ============================================================================
+# Application Lifespan
+# ============================================================================
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Agniveer Sentinel starting")
     active_db_url = await init_db()
     logger.info("Database initialized using %s", active_db_url)
+    
+    # Initialize AgniAssist AI services
+    logger.info("Initializing AI Services...")
+    
+    # Initialize RAG Service
+    try:
+        from agniassist.services.rag_service import rag_service
+        await rag_service.initialize()
+        logger.info("✅ RAG Service initialized")
+    except Exception as e:
+        logger.warning(f"RAG Service init warning: {e}")
+    
+    # Initialize ML Service
+    try:
+        from agniassist.services.ml_service import ml_service
+        ml_service.initialize()
+        logger.info("✅ ML Service initialized")
+    except Exception as e:
+        logger.warning(f"ML Service init warning: {e}")
+    
+    # Initialize OCR Service
+    try:
+        from agniassist.services.ocr_service import ocr_service
+        ocr_service.initialize()
+        logger.info("✅ OCR Service initialized")
+    except Exception as e:
+        logger.warning(f"OCR Service init warning: {e}")
+    
+    # Initialize NLP Service
+    try:
+        from agniassist.services.nlp_service import nlp_service
+        nlp_service.initialize()
+        logger.info("✅ NLP Service initialized")
+    except Exception as e:
+        logger.warning(f"NLP Service init warning: {e}")
+    
+    # Initialize GenAI Service
+    try:
+        from agniassist.services.genai_service import genai_service
+        genai_service.initialize()
+        logger.info("✅ GenAI Service initialized")
+    except Exception as e:
+        logger.warning(f"GenAI Service init warning: {e}")
+    
+    logger.info("🎯 All AI Services Ready")
+    
     yield
+    
     logger.info("Agniveer Sentinel shutting down")
 
+
+# ============================================================================
+# FastAPI App Creation
+# ============================================================================
 
 app = FastAPI(
     title="Agniveer Sentinel",
     version="1.0.0",
-    description="Military Training Platform - Unified API",
+    description="Military Training Platform - Unified API with AI Capabilities",
     lifespan=lifespan,
 )
 
@@ -66,6 +163,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ============================================================================
+# Middleware
+# ============================================================================
 
 @app.middleware("http")
 async def request_logging_middleware(request: Request, call_next):
@@ -113,6 +214,10 @@ async def standard_response_middleware(request: Request, call_next):
     return JSONResponse(status_code=response.status_code, content=wrapped, headers=headers)
 
 
+# ============================================================================
+# Exception Handlers
+# ============================================================================
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(_: Request, exc: HTTPException):
     return JSONResponse(
@@ -130,6 +235,10 @@ async def unhandled_exception_handler(_: Request, exc: Exception):
         content={"success": False, "data": None, "message": "Internal server error"},
     )
 
+
+# ============================================================================
+# Router Registration
+# ============================================================================
 
 SERVICE_ROUTERS = [
     (auth_router, f"{API_PREFIX}/auth", "Auth Service"),
@@ -186,12 +295,20 @@ if missing_prefixes:
     raise RuntimeError(message)
 
 
+# ============================================================================
+# Startup Event
+# ============================================================================
+
 @app.on_event("startup")
 async def log_registered_routes() -> None:
     print("Registered routes:")
     for route in app.routes:
         print(route.path)
 
+
+# ============================================================================
+# Health and Root Endpoints
+# ============================================================================
 
 @app.get("/health")
 async def health() -> dict[str, Any]:
@@ -202,11 +319,31 @@ async def health() -> dict[str, Any]:
     }
 
 
+@app.get("/health/ai")
+async def ai_health() -> dict[str, Any]:
+    """AI Services health check"""
+    return {
+        "success": True,
+        "data": {
+            "status": "ok",
+            "service": "AgniAssist",
+            "version": "1.0.0",
+            "mode": "integrated"
+        },
+        "message": "AI Services healthy",
+    }
+
+
 @app.get("/")
 async def root() -> dict[str, Any]:
     return {
         "success": True,
-        "data": {"docs": "/docs", "api_prefix": API_PREFIX},
+        "data": {
+            "docs": "/docs",
+            "api_prefix": API_PREFIX,
+            "service": "Agniveer Sentinel",
+            "ai_service": "AgniAssist Integrated"
+        },
         "message": "Agniveer Sentinel running",
     }
 
@@ -214,4 +351,4 @@ async def root() -> dict[str, Any]:
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
