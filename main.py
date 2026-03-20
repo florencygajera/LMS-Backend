@@ -1,4 +1,4 @@
-﻿"""Agniveer Sentinel unified API entrypoint."""
+﻿"""Agniveer unified API entrypoint."""
 
 from __future__ import annotations
 
@@ -26,12 +26,8 @@ from common.core.database import get_database_url, init_db
 from services.auth_service.api.endpoints.auth import router as auth_router
 from services.document_service.api.endpoints.documents import router as documents_router
 from services.ml_service.api.endpoints.ml import router as ml_router
-from services.notification_service.api.endpoints.notifications import (
-    router as notifications_router,
-)
-from services.recruitment_service.api.endpoints.recruitment import (
-    router as recruitment_router,
-)
+from services.notification_service.api.endpoints.notifications import ( router as notifications_router, )
+from services.recruitment_service.api.endpoints.recruitment import (router as recruitment_router,)
 from services.report_service.api.endpoints.reports import router as reports_router
 from services.soldier_service.api.endpoints.soldier import router as soldier_router
 from services.training_service.api.endpoints.training import router as training_router
@@ -113,27 +109,23 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"ML Service init warning: {e}")
     
-    # Initialize OCR Service
+    # OCR, NLP, and GenAI services initialize themselves at import time
+    # Just verify they're importable
     try:
         from agniassist.services.ocr_service import ocr_service
-        ocr_service.initialize()
-        logger.info("✅ OCR Service initialized")
+        logger.info("✅ OCR Service loaded")
     except Exception as e:
         logger.warning(f"OCR Service init warning: {e}")
     
-    # Initialize NLP Service
     try:
         from agniassist.services.nlp_service import nlp_service
-        nlp_service.initialize()
-        logger.info("✅ NLP Service initialized")
+        logger.info("✅ NLP Service loaded")
     except Exception as e:
         logger.warning(f"NLP Service init warning: {e}")
     
-    # Initialize GenAI Service
     try:
         from agniassist.services.genai_service import genai_service
-        genai_service.initialize()
-        logger.info("✅ GenAI Service initialized")
+        logger.info("✅ GenAI Service loaded")
     except Exception as e:
         logger.warning(f"GenAI Service init warning: {e}")
     
@@ -149,7 +141,7 @@ async def lifespan(app: FastAPI):
 # ============================================================================
 
 app = FastAPI(
-    title="Agniveer Sentinel",
+    title="Agniveer",
     version="1.0.0",
     description="Military Training Platform - Unified API with AI Capabilities",
     lifespan=lifespan,
