@@ -7,7 +7,7 @@ import pytest
 from httpx import AsyncClient
 
 from models.base import TrainingType
-from services.soldier_service.api.endpoints.soldier import generate_soldier_id
+from api.routes.soldier import generate_soldier_id
 from schemas.soldier import MedicalRecordCreate
 from schemas.training import TrainingRecordCreate
 

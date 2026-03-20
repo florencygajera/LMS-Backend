@@ -59,6 +59,16 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
+class RefreshTokenRequest(BaseModel):
+    """Schema for refresh token exchange."""
+    refresh_token: str
+
+
+class LogoutRequest(BaseModel):
+    """Schema for logout operations."""
+    refresh_token: Optional[str] = None
+
+
 class TokenPayload(BaseModel):
     """Token payload schema"""
     sub: Optional[int] = None

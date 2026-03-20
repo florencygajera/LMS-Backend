@@ -27,7 +27,6 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     API_V1_PREFIX: str = "/api/v1"
     PORT: int = 8001
-    PORT: int = 8001
     
     # Security
     SECRET_KEY: str = "your-secret-key-change-in-production"

@@ -5,7 +5,7 @@ Agniveer Sentinel - Phase 1: Recruitment System
 
 from sqlalchemy import Column, Integer, String, DateTime, Date, Enum, Boolean, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from core.database import Base
 from models.base import BaseModel, ApplicationStatus
 
@@ -247,7 +247,7 @@ class AdmitCard(BaseModel):
     
     # PDF
     pdf_url = Column(String(500), nullable=True)
-    generated_at = Column(DateTime, default=datetime.utcnow)
+    generated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     
     # Delivery Status
     email_sent = Column(Boolean, default=False)

@@ -3,6 +3,8 @@ Authentication Endpoints
 Agniveer LMS - Auth Service
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from core.database import get_db
+from core.config import settings
 from core.security import (
     get_password_hash, verify_password, 
     create_access_token, create_refresh_token, decode_token,
@@ -20,10 +23,12 @@ from models.base import UserRole
 from models.user import User, RefreshToken, AuditLog
 from schemas.user import (
     UserCreate, UserResponse, UserUpdate, UserLogin, Token,
-    PasswordChange, PasswordReset, PasswordResetConfirm
+    PasswordChange, PasswordReset, PasswordResetConfirm,
+    RefreshTokenRequest, LogoutRequest
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 @router.get("/")
 async def auth_service_test():
@@ -135,8 +140,8 @@ async def login(
     refresh_token_obj = RefreshToken(
         user_id=user.id,
         token=refresh_token,
-        expires_at=datetime.now(timezone.utc) + timedelta(days=7),
-        device_info=form_data.client_id
+        expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        device_info=request.headers.get("user-agent"),
     )
 
     db.add(refresh_token_obj)
@@ -154,16 +159,18 @@ async def login(
     
     return Token(
         access_token=access_token,
-        refresh_token=refresh_token
+        refresh_token=refresh_token,
+        token_type="bearer",
     )
 
-
 @router.post("/refresh", response_model=Token)
-async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
+async def refresh_token(payload: RefreshTokenRequest, db: AsyncSession = Depends(get_db)):
     """Refresh access token using refresh token"""
+    refresh_token_value = payload.refresh_token
+
     # Verify refresh token
-    payload = decode_token(refresh_token)
-    if not payload or payload.get("type") != "refresh":
+    token_payload = decode_token(refresh_token_value)
+    if not token_payload or token_payload.get("type") != "refresh":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token"
@@ -172,7 +179,7 @@ async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
     # Check if refresh token exists in database
     result = await db.execute(
         select(RefreshToken).where(
-            RefreshToken.token == refresh_token,
+            RefreshToken.token == refresh_token_value,
             RefreshToken.is_revoked == False
         )
     )
@@ -185,7 +192,7 @@ async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
         )
     
     # Get user
-    user_id = int(payload.get("sub"))
+    user_id = int(token_payload.get("sub"))
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     
@@ -213,16 +220,42 @@ async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
     
     return Token(
         access_token=new_access_token,
-        refresh_token=new_refresh_token
+        refresh_token=new_refresh_token,
+        token_type="bearer",
     )
 
 
 @router.post("/logout")
 async def logout(
+    payload: LogoutRequest | None = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Logout user and revoke refresh token"""
+    token_to_revoke = payload.refresh_token if payload else None
+    if token_to_revoke:
+        result = await db.execute(
+            select(RefreshToken).where(
+                RefreshToken.user_id == current_user.id,
+                RefreshToken.token == token_to_revoke,
+                RefreshToken.is_revoked == False,
+            )
+        )
+        active_token = result.scalar_one_or_none()
+    else:
+        result = await db.execute(
+            select(RefreshToken).where(
+                RefreshToken.user_id == current_user.id,
+                RefreshToken.is_revoked == False,
+            )
+        )
+        active_token = result.scalar_one_or_none()
+
+    if active_token:
+        active_token.is_revoked = True
+    else:
+        logger.info("Logout called with no active refresh token to revoke for user_id=%s", current_user.id)
+
     # Log the logout
     audit_log = AuditLog(
         user_id=current_user.id,

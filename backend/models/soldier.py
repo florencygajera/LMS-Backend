@@ -5,7 +5,7 @@ Agniveer Sentinel - Phase 2: Soldier Management LMS
 
 from sqlalchemy import Column, Integer, String, DateTime, Date, Enum, Boolean, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timezone
 from core.database import Base
 from models.base import BaseModel, TrainingType, PaymentStatus
 
@@ -368,7 +368,7 @@ class SOSAlert(BaseModel):
     # Status
     is_active = Column(Boolean, default=True)
     triggered_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    triggered_at = Column(DateTime, default=datetime.utcnow)
+    triggered_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     resolved_at = Column(DateTime, nullable=True)
     
     # Scope

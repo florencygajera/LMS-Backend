@@ -38,7 +38,15 @@ class FakeAsyncSession:
         for criterion in statement._where_criteria:
             if isinstance(criterion, BinaryExpression):
                 field_name = criterion.left.key
-                expected = criterion.right.value
+                right = criterion.right
+                if hasattr(right, "value"):
+                    expected = right.value
+                elif getattr(right, "__visit_name__", None) == "true":
+                    expected = True
+                elif getattr(right, "__visit_name__", None) == "false":
+                    expected = False
+                else:
+                    expected = right
                 records = [r for r in records if getattr(r, field_name) == expected]
 
         return FakeScalarResult(records[0] if records else None)
@@ -95,7 +103,7 @@ async def db_session():
 @pytest_asyncio.fixture
 async def client(db_session):
     """Create test client with database dependency override."""
-    from services.auth_service.main import app
+    from main import app
 
     import_models()
 

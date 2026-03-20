@@ -5,7 +5,7 @@ Agniveer Sentinel - Auth Service
 
 from sqlalchemy import Column, Integer, String, DateTime, Enum, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from core.database import Base
 from models.base import UserRole, BaseModel
 
@@ -31,7 +31,7 @@ class User(BaseModel):
     failed_login_attempts = Column(Integer, default=0)
     locked_until = Column(DateTime, nullable=True)
     last_login = Column(DateTime, nullable=True)
-    password_changed_at = Column(DateTime, default=datetime.utcnow)
+    password_changed_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     
     # Relationships
     candidate_profile = relationship("Candidate", back_populates="user", uselist=False)
