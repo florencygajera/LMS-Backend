@@ -12,7 +12,7 @@ import json
 
 from core.security import get_current_user
 from models.user import User
-from services.weather_service.services.weather_service import weather_service
+from services.weather_service import weather_service
 from models.soldier import DailySchedule
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -219,6 +219,7 @@ async def auto_adjust_soldier_schedule(
         "adjustment_reason": result["adjustment_reason"],
         "weather": result["weather_recommendation"]
     }
+
 
 
 

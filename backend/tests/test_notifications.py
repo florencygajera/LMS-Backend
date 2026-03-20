@@ -1,6 +1,6 @@
 import pytest
 
-from services.notification_service.services.websocket_manager import NotificationService
+from services.websocket_manager import NotificationService
 
 
 class DummyWebSocket:
@@ -31,6 +31,7 @@ async def test_notify_soldier_supports_notification_type():
     await service.notify_soldier(1, "Alert", "Body", "warning")
 
     assert socket.messages[-1]["notification_type"] == "warning"
+
 
 
 

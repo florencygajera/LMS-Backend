@@ -23,7 +23,7 @@ def generate_daily_report(self, soldier_id: int, report_date: date = None):
         from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
         from sqlalchemy import select
         from models.soldier import Soldier, TrainingRecord
-        from services.report_service.services.report_generator import pdf_generator
+        from services.report_generator import pdf_generator
         
         engine = create_async_engine(db_url)
         
@@ -188,7 +188,7 @@ def generate_monthly_report(self, soldier_id: int, month: int, year: int):
         from sqlalchemy import select, desc
         from datetime import datetime
         from models.soldier import Soldier, TrainingRecord
-        from services.report_service.services.report_generator import pdf_generator
+        from services.report_generator import pdf_generator
         
         engine = create_async_engine(db_url)
         
@@ -268,6 +268,7 @@ def generate_monthly_report(self, soldier_id: int, month: int, year: int):
     
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(_generate())
+
 
 
 

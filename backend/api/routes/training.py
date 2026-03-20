@@ -16,7 +16,7 @@ from core.security import get_current_user
 from models.base import UserRole, TrainingType
 from models.user import User
 from models.soldier import Soldier, TrainingRecord, Battalion
-from services.training_service.services.excel_processor import excel_processor
+from services.excel_processor import excel_processor
 from schemas.training import (
     TrainingRecordCreate, TrainingRecordResponse,
     TrainingUploadResponse, TrainingStatsResponse
@@ -319,6 +319,7 @@ async def get_battalion_training_stats(
     battalion_stats["soldier_stats"].sort(key=lambda x: x["avg_score"], reverse=True)
     
     return battalion_stats
+
 
 
 

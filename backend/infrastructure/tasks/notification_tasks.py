@@ -111,7 +111,7 @@ def broadcast_sos_alert(self, alert_id: int, battalion_id: int = None):
         from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
         from sqlalchemy import select
         from models.soldier import Soldier, SOSAlert
-        from services.notification_service.services.websocket_manager import notification_service
+        from services.websocket_manager import notification_service
         
         engine = create_async_engine(db_url)
         
@@ -172,7 +172,7 @@ def send_training_schedule_notifications(self):
         from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
         from sqlalchemy import select
         from models.soldier import Soldier
-        from services.notification_service.services.websocket_manager import notification_service
+        from services.websocket_manager import notification_service
         
         engine = create_async_engine(db_url)
         
@@ -195,6 +195,7 @@ def send_training_schedule_notifications(self):
     
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(_notify())
+
 
 
 

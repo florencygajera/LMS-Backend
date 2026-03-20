@@ -16,7 +16,7 @@ from core.security import get_current_user
 from models.base import UserRole
 from models.user import User
 from models.soldier import Soldier, Battalion, SOSAlert
-from services.notification_service.services.websocket_manager import notification_service
+from services.websocket_manager import notification_service
 
 
 router = APIRouter()
@@ -246,6 +246,7 @@ async def get_sos_alert_history(
         })
     
     return alerts
+
 
 
 

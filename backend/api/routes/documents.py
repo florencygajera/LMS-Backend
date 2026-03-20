@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from core.authorization import admin_required
 from models.user import User
-from services.document_service.services.ocr_service import ocr_service
+from services.ocr_service import ocr_service
 
 
 router = APIRouter()
@@ -34,6 +34,7 @@ async def process_document_ocr(
     if not result["success"]:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=result["error"])
     return result
+
 
 
 
