@@ -343,8 +343,16 @@ async def root() -> dict[str, Any]:
 if __name__ == "__main__":
     import uvicorn
     from core.config import settings
+    import sys
     
-    uvicorn.run("main:app", host="127.0.0.1", port=settings.PORT, reload=True)
+    # Get port from command line args or use settings
+    port = settings.PORT
+    if "--port" in sys.argv:
+        idx = sys.argv.index("--port")
+        if len(sys.argv) > idx + 1:
+            port = int(sys.argv[idx + 1])
+    
+    uvicorn.run("main:app", host="127.0.0.1", port=port, reload=True)
 
 
 
