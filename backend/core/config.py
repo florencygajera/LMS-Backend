@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
     API_V1_PREFIX: str = "/api/v1"
+    PORT: int = 8001
+    PORT: int = 8001
     
     # Security
     SECRET_KEY: str = "your-secret-key-change-in-production"
@@ -109,7 +111,7 @@ class Settings(BaseSettings):
     
     # CORS
     BACKEND_CORS_ORIGINS_RAW: str = Field(
-        default="http://localhost:3000,http://localhost:8000",
+        default="http://localhost:3000,http://localhost:8001",
         validation_alias="CORS_ORIGINS",
     )
 
