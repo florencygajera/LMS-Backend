@@ -46,23 +46,22 @@ async def migrate_to_postgres(data):
                 continue
             
             columns = table_data['columns']
-            placeholders = ', '.join([f'${i+1}' for i in range(len(columns))])
             column_names = ', '.join(columns)
             
-            insert_sql = text(f"INSERT INTO {table_name} ({column_names}) VALUES ({placeholders})")
+            insert_sql = text(f"INSERT INTO {table_name} ({column_names}) VALUES ({', '.join([':' + col for col in columns])})")
             
             for row in table_data['rows']:
-                # Convert values - handle special types
-                values = []
+                # Convert values to dictionary (required by asyncpg)
+                values = {}
                 for col in columns:
                     val = row.get(col)
                     # Handle None and special values
                     if val is None:
-                        values.append(None)
+                        values[col] = None
                     elif isinstance(val, (int, float, str)):
-                        values.append(val)
+                        values[col] = val
                     else:
-                        values.append(str(val))
+                        values[col] = str(val)
                 
                 try:
                     await conn.execute(insert_sql, values)
