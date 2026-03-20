@@ -115,6 +115,8 @@ class Settings(BaseSettings):
 
     @property
     def BACKEND_CORS_ORIGINS(self) -> list[str]:
+        if self.BACKEND_CORS_ORIGINS_RAW.strip() == "*":
+            return ["*"]
         return [
             origin.strip()
             for origin in self.BACKEND_CORS_ORIGINS_RAW.split(",")
