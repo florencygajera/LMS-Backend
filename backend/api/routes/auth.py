@@ -91,7 +91,7 @@ async def login(
     user = result.scalar_one_or_none()
     
     # Check if user exists and password is correct
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    if not user or not user.hashed_password or not verify_password(form_data.password, user.hashed_password):
         # Log failed attempt
         audit_log = AuditLog(
             user_id=user.id if user else None,
@@ -110,7 +110,7 @@ async def login(
         )
     
     # Check if account is locked
-    if user.locked_until and user.locked_until > datetime.utcnow():
+    if user.locked_until and user.locked_until > datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is locked. Please try again later."
@@ -138,6 +138,7 @@ async def login(
         expires_at=datetime.now(timezone.utc) + timedelta(days=7),
         device_info=form_data.client_id
     )
+
     db.add(refresh_token_obj)
     
     # Log successful login
@@ -177,7 +178,7 @@ async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
     )
     stored_token = result.scalar_one_or_none()
     
-    if not stored_token or stored_token.expires_at < datetime.utcnow():
+    if not stored_token or stored_token.expires_at < datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token expired or revoked"
@@ -205,7 +206,7 @@ async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
     new_refresh_token_obj = RefreshToken(
         user_id=user.id,
         token=new_refresh_token,
-        expires_at=datetime.utcnow() + timedelta(days=7)
+        expires_at=datetime.now(timezone.utc) + timedelta(days=7)
     )
     db.add(new_refresh_token_obj)
     await db.commit()
