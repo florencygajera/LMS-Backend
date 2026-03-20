@@ -22,7 +22,7 @@ def update_leaderboard(self, battalion_id: int = None, month: int = None, year: 
         
         from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
         from sqlalchemy import select, desc, and_
-        from services.soldier_service.models.soldier import Soldier, TrainingRecord, PerformanceRanking
+        from models.soldier import Soldier, TrainingRecord, PerformanceRanking
         
         target_month = month or datetime.now().month
         target_year = year or datetime.now().year
@@ -187,5 +187,6 @@ def process_training_excel(self, file_path: str, trainer_id: int):
     
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(_process())
+
 
 

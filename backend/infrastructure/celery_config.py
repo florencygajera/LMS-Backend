@@ -122,3 +122,4 @@ class BaseTask(celery_app.Task):
         print(f"Task {task_id} succeeded: {retval}")
 
 
+

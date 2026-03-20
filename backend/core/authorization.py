@@ -11,8 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db
 from core.security import get_current_user
 from models.base import UserRole
-from services.auth_service.models.user import User
-from services.soldier_service.models.soldier import MedicalRecord, Soldier
+from models.user import User
+from models.soldier import MedicalRecord, Soldier
 
 
 def require_roles(*roles: UserRole):
@@ -90,5 +90,6 @@ async def can_access_medical_record(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="You are not authorized to access this medical record.",
     )
+
 
 

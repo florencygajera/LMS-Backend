@@ -17,8 +17,8 @@ from core.security import (
     get_current_user, RoleChecker
 )
 from models.base import UserRole
-from services.auth_service.models.user import User, RefreshToken, AuditLog
-from services.auth_service.schemas.user import (
+from models.user import User, RefreshToken, AuditLog
+from schemas.user import (
     UserCreate, UserResponse, UserUpdate, UserLogin, Token,
     PasswordChange, PasswordReset, PasswordResetConfirm
 )
@@ -309,5 +309,6 @@ async def change_password(
 
 # Role-based access control
 admin_only = RoleChecker([UserRole.SUPER_ADMIN, UserRole.ADMIN])
+
 
 

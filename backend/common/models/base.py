@@ -79,3 +79,4 @@ class UserBase(BaseModel):
     profile_photo_url = Column(String(500), nullable=True)
 
 
+

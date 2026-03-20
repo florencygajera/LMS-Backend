@@ -66,3 +66,4 @@ class EmbeddingsGenerator:
 embeddings_generator = EmbeddingsGenerator()
 
 
+

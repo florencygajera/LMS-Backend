@@ -10,7 +10,7 @@ from datetime import datetime, date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from services.soldier_service.models.soldier import Soldier, TrainingRecord
+from models.soldier import Soldier, TrainingRecord
 from models.base import TrainingType
 
 
@@ -207,5 +207,6 @@ class ExcelTrainingProcessor:
 
 # Singleton instance
 excel_processor = ExcelTrainingProcessor()
+
 
 

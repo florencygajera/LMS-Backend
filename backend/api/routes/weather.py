@@ -11,9 +11,9 @@ from json import JSONDecodeError
 import json
 
 from core.security import get_current_user
-from services.auth_service.models.user import User
+from models.user import User
 from services.weather_service.services.weather_service import weather_service
-from services.soldier_service.models.soldier import DailySchedule
+from models.soldier import DailySchedule
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from core.database import get_db
@@ -219,5 +219,6 @@ async def auto_adjust_soldier_schedule(
         "adjustment_reason": result["adjustment_reason"],
         "weather": result["weather_recommendation"]
     }
+
 
 

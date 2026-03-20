@@ -24,13 +24,13 @@ from core.authorization import (
 from core.security import get_current_user
 from core.storage import storage
 from models.base import UserRole
-from services.auth_service.models.user import User
-from services.soldier_service.models.soldier import (
+from models.user import User
+from models.soldier import (
     Soldier, SoldierDocument, Battalion, BattalionPosting,
     MedicalRecord, TrainingRecord, DailySchedule, Equipment,
     SoldierEvent, Stipend, PerformanceRanking, SOSAlert
 )
-from services.soldier_service.schemas.soldier import (
+from schemas.soldier import (
     SoldierCreate, SoldierUpdate, SoldierResponse,
     BattalionCreate, BattalionResponse,
     MedicalRecordCreate, MedicalRecordResponse,
@@ -603,5 +603,6 @@ async def resolve_sos(
     await db.commit()
     
     return {"message": "SOS resolved successfully"}
+
 
 

@@ -14,8 +14,8 @@ from core.database import get_db
 from core.authorization import admin_required
 from core.security import get_current_user
 from models.base import UserRole
-from services.auth_service.models.user import User
-from services.soldier_service.models.soldier import Soldier, Battalion, SOSAlert
+from models.user import User
+from models.soldier import Soldier, Battalion, SOSAlert
 from services.notification_service.services.websocket_manager import notification_service
 
 
@@ -246,5 +246,6 @@ async def get_sos_alert_history(
         })
     
     return alerts
+
 
 

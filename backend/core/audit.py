@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.auth_service.models.user import AuditLog, User
+from models.user import AuditLog, User
 
 
 async def log_security_event(
@@ -35,5 +35,6 @@ async def log_security_event(
     db.add(audit_entry)
     await db.flush()
     return audit_entry
+
 
 

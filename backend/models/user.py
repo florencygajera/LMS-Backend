@@ -77,3 +77,4 @@ class RefreshToken(BaseModel):
         return f"<RefreshToken(id={self.id}, user_id={self.user_id}, is_revoked={self.is_revoked})>"
 
 
+

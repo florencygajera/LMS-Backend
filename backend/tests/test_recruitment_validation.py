@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from services.recruitment_service.schemas.recruitment import ApplicationVerificationRequest
+from schemas.recruitment import ApplicationVerificationRequest
 
 
 def test_application_verification_requires_batch():
@@ -26,5 +26,6 @@ def test_application_verification_accepts_valid_payload():
     )
 
     assert payload.recruitment_batch == "2026-A"
+
 
 

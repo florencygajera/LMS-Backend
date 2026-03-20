@@ -202,3 +202,4 @@ class ApplicationStatusResponse(BaseModel):
     exam_registration: Optional[ExamRegistrationResponse]
 
 
+

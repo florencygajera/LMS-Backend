@@ -74,3 +74,4 @@ async def extract_entities(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+

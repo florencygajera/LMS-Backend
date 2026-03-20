@@ -22,7 +22,7 @@ def generate_daily_report(self, soldier_id: int, report_date: date = None):
         
         from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
         from sqlalchemy import select
-        from services.soldier_service.models.soldier import Soldier, TrainingRecord
+        from models.soldier import Soldier, TrainingRecord
         from services.report_service.services.report_generator import pdf_generator
         
         engine = create_async_engine(db_url)
@@ -99,7 +99,7 @@ def generate_daily_reports(self):
     async def _generate():
         from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
         from sqlalchemy import select
-        from services.soldier_service.models.soldier import Soldier
+        from models.soldier import Soldier
         
         engine = create_async_engine(db_url)
         
@@ -141,7 +141,7 @@ def generate_monthly_reports(self, month: int = None, year: int = None):
         
         from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
         from sqlalchemy import select
-        from services.soldier_service.models.soldier import Soldier
+        from models.soldier import Soldier
         
         target_month = month or datetime.now().month
         target_year = year or datetime.now().year
@@ -187,7 +187,7 @@ def generate_monthly_report(self, soldier_id: int, month: int, year: int):
         from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
         from sqlalchemy import select, desc
         from datetime import datetime
-        from services.soldier_service.models.soldier import Soldier, TrainingRecord
+        from models.soldier import Soldier, TrainingRecord
         from services.report_service.services.report_generator import pdf_generator
         
         engine = create_async_engine(db_url)
@@ -268,5 +268,6 @@ def generate_monthly_report(self, soldier_id: int, month: int, year: int):
     
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(_generate())
+
 
 

@@ -72,3 +72,4 @@ class BattalionStatsResponse(BaseModel):
     soldier_stats: List[dict]
 
 
+

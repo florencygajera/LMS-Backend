@@ -325,3 +325,4 @@ class PDFReportGenerator:
 pdf_generator = PDFReportGenerator()
 
 
+

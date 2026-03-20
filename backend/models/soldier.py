@@ -381,3 +381,4 @@ class SOSAlert(BaseModel):
         return f"<SOSAlert(id={self.id}, triggered_at={self.triggered_at})>"
 
 
+

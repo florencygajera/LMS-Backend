@@ -23,3 +23,4 @@ def downgrade() -> None:
     Base.metadata.drop_all(bind=bind)
 
 
+

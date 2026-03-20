@@ -18,12 +18,12 @@ from core.authorization import admin_required
 from core.security import get_current_user
 from core.storage import storage
 from models.base import UserRole, ApplicationStatus
-from services.auth_service.models.user import User
-from services.recruitment_service.models.recruitment import (
+from models.user import User
+from models.recruitment import (
     Candidate, CandidateDocument, Application, ExamCenter, Exam,
     ExamRegistration, AdmitCard
 )
-from services.recruitment_service.schemas.recruitment import (
+from schemas.recruitment import (
     CandidateCreate, CandidateUpdate, CandidateResponse,
     ApplicationCreate, ApplicationResponse, ExamCenterResponse,
     ExamResponse, ExamRegistrationResponse, AdmitCardResponse,
@@ -492,5 +492,6 @@ async def verify_application(
     await db.commit()
     
     return {"message": "Application verified", "overall_eligible": application.overall_eligible}
+
 
 

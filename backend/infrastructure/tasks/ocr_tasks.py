@@ -15,8 +15,8 @@ def process_ocr_document(self, document_id: int, document_type: str):
     """Process OCR for uploaded document"""
     from sqlalchemy import select
     from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-    from services.recruitment_service.models.recruitment import CandidateDocument
-    from services.soldier_service.models.soldier import SoldierDocument
+    from models.recruitment import CandidateDocument
+    from models.soldier import SoldierDocument
     from services.document_service.services.ocr_service import ocr_service
     
     import os
@@ -62,7 +62,7 @@ def process_ocr_document(self, document_id: int, document_type: str):
                     )
                     soldier_document = result.scalar_one_or_none()
                     if soldier_document:
-                        from services.soldier_service.models.soldier import Soldier
+                        from models.soldier import Soldier
 
                         soldier_result = await session.execute(
                             select(Soldier).where(Soldier.id == soldier_document.soldier_id)
@@ -106,5 +106,6 @@ def extract_profile_data(self, document_id: int, soldier_id: int = None):
     
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(_extract())
+
 
 

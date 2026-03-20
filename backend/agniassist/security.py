@@ -22,3 +22,4 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     return {"token": token, "verified": True}
 
 
+
