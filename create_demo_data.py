@@ -3,7 +3,8 @@ Demo Data Generator for Agniveer LMS
 Creates users, candidates, soldiers, and related data
 """
 import os
-os.environ['USE_SQLITE'] = 'true'
+# Temporarily use SQLite for demo data creation (comment out to use PostgreSQL)
+# os.environ['USE_SQLITE'] = 'true'
 
 import asyncio
 from datetime import datetime, date, timedelta
