@@ -1,1 +1,0 @@
-# Training Service Endpoints Module

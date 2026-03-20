@@ -1,1 +1,0 @@
-# Soldier Service Module

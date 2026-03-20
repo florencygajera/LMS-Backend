@@ -1,1 +1,0 @@
-# Document Service Endpoints Module
