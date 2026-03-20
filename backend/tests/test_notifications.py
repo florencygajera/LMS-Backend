@@ -35,3 +35,4 @@ async def test_notify_soldier_supports_notification_type():
 
 
 
+

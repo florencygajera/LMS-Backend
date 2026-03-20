@@ -29,7 +29,7 @@ from schemas.recruitment import (
     ExamResponse, ExamRegistrationResponse, AdmitCardResponse,
     ApplicationStatusResponse, ApplicationVerificationRequest, DocumentUploadResponse
 )
-from services.recruitment_service.services.admit_card_service import (
+from services.admit_card_service import (
     admit_card_generator,
     notification_service,
 )
@@ -492,6 +492,7 @@ async def verify_application(
     await db.commit()
     
     return {"message": "Application verified", "overall_eligible": application.overall_eligible}
+
 
 
 

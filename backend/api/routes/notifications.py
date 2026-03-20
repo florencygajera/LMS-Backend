@@ -246,7 +246,3 @@ async def get_sos_alert_history(
         })
     
     return alerts
-
-
-
-

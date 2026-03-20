@@ -110,3 +110,4 @@ def extract_profile_data(self, document_id: int, soldier_id: int = None):
 
 
 
+

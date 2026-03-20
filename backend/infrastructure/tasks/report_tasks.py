@@ -272,3 +272,4 @@ def generate_monthly_report(self, soldier_id: int, month: int, year: int):
 
 
 
+
