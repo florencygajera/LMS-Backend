@@ -95,6 +95,16 @@ def run(label, method, path, *, params=None, json_body=None, form_body=None,
 
 
 # ─── Unique test user ────────────────────────────────────────────────────────
+
+# Fix the email in your test data
+TEST_USER = {
+    "email": "testuser@agniveer.in",   # ← real-looking domain
+    "username": "testuser01",
+    "full_name": "Test User",
+    "password": "TestPass@123",
+    "role": "candidate"
+}
+
 ts = int(time.time())
 TEST_EMAIL    = f"test_{ts}@agniveer.test"
 TEST_USERNAME = f"testuser_{ts}"
