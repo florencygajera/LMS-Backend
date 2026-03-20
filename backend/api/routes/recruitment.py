@@ -1,6 +1,6 @@
 """
 Recruitment Endpoints
-Agniveer Sentinel - Phase 1: Recruitment System
+Agniveer - Phase 1: Recruitment System
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status, UploadFile, File, Form
@@ -29,12 +29,6 @@ from schemas.recruitment import (
     ExamResponse, ExamRegistrationResponse, AdmitCardResponse,
     ApplicationStatusResponse, ApplicationVerificationRequest, DocumentUploadResponse
 )
-from services.admit_card_service import (
-    admit_card_generator,
-    notification_service,
-)
-
-
 router = APIRouter()
 
 @router.get("/")
@@ -376,6 +370,11 @@ async def verify_application(
     db: AsyncSession = Depends(get_db),
 ):
     """Verify candidate application (Admin)"""
+    from services.admit_card_service import (
+        admit_card_generator,
+        notification_service,
+    )
+
     result = await db.execute(select(Candidate).where(Candidate.id == candidate_id))
     candidate = result.scalar_one_or_none()
     
