@@ -3,7 +3,7 @@ Report Background Tasks
 Agniveer Sentinel - Enterprise Production
 """
 
-from infrastructure.celery_config import celery_app, BaseTask
+from core.celery_config import celery_app, BaseTask
 from celery import group
 from datetime import datetime, date
 import asyncio

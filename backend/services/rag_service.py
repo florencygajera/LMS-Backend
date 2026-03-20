@@ -9,8 +9,8 @@ from pathlib import Path
 import re
 import json
 
-from agniassist.utils.vector_store import vector_store
-from agniassist.utils.embeddings import embeddings_generator
+from utils.vector_store import vector_store
+from utils.embeddings import embeddings_generator
 
 logger = logging.getLogger("AgniAssist.RAG")
 
@@ -201,7 +201,7 @@ class RAGService:
         """Generate answer from context"""
         # Try local LLM first
         try:
-            from agniassist.services.genai_service import genai_service
+            from services.genai_service import genai_service
             answer = await genai_service.generate(
                 prompt=f"Based on the following context, answer the question.\n\nContext:\n{context}\n\nQuestion: {query}\n\nAnswer:",
                 max_tokens=200

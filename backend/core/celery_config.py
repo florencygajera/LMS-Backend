@@ -16,11 +16,11 @@ celery_app = Celery(
     broker=REDIS_URL,
     backend=REDIS_URL,
     include=[
-        "infrastructure.tasks.ocr_tasks",
-        "infrastructure.tasks.report_tasks",
-        "infrastructure.tasks.notification_tasks",
-        "infrastructure.tasks.training_tasks",
-        "infrastructure.tasks.backup_tasks",
+        "scripts.infrastructure.tasks.ocr_tasks",
+        "scripts.infrastructure.tasks.report_tasks",
+        "scripts.infrastructure.tasks.notification_tasks",
+        "scripts.infrastructure.tasks.training_tasks",
+        "scripts.infrastructure.tasks.backup_tasks",
     ]
 )
 
@@ -55,48 +55,48 @@ celery_app.conf.update(
     
     # Task routing
     task_routes={
-        "infrastructure.tasks.ocr_tasks.*": {"queue": "ocr"},
-        "infrastructure.tasks.report_tasks.*": {"queue": "reports"},
-        "infrastructure.tasks.notification_tasks.*": {"queue": "notifications"},
-        "infrastructure.tasks.training_tasks.*": {"queue": "training"},
-        "infrastructure.tasks.backup_tasks.*": {"queue": "maintenance"},
+        "scripts.infrastructure.tasks.ocr_tasks.*": {"queue": "ocr"},
+        "scripts.infrastructure.tasks.report_tasks.*": {"queue": "reports"},
+        "scripts.infrastructure.tasks.notification_tasks.*": {"queue": "notifications"},
+        "scripts.infrastructure.tasks.training_tasks.*": {"queue": "training"},
+        "scripts.infrastructure.tasks.backup_tasks.*": {"queue": "maintenance"},
     },
     
     # Beat schedule
     beat_schedule={
         # Daily performance reports - run at 8 PM
         "daily-reports": {
-            "task": "infrastructure.tasks.report_tasks.generate_daily_reports",
+            "task": "scripts.infrastructure.tasks.report_tasks.generate_daily_reports",
             "schedule": crontab(hour=20, minute=0),
         },
         
         # Monthly reports - run on 1st of each month at 2 AM
         "monthly-reports": {
-            "task": "infrastructure.tasks.report_tasks.generate_monthly_reports",
+            "task": "scripts.infrastructure.tasks.report_tasks.generate_monthly_reports",
             "schedule": crontab(day_of_month=1, hour=2, minute=0),
         },
         
         # Leaderboard update - run daily at 6 AM
         "update-leaderboard": {
-            "task": "infrastructure.tasks.training_tasks.update_leaderboard",
+            "task": "scripts.infrastructure.tasks.training_tasks.update_leaderboard",
             "schedule": crontab(hour=6, minute=0),
         },
         
         # Daily backup - run at 2 AM
         "daily-backup": {
-            "task": "infrastructure.tasks.backup_tasks.database_backup",
+            "task": "scripts.infrastructure.tasks.backup_tasks.database_backup",
             "schedule": crontab(hour=2, minute=0),
         },
         
         # Cleanup old files - run weekly on Sunday at 3 AM
         "cleanup-old-files": {
-            "task": "infrastructure.tasks.backup_tasks.cleanup_old_files",
+            "task": "scripts.infrastructure.tasks.backup_tasks.cleanup_old_files",
             "schedule": crontab(day_of_week=0, hour=3, minute=0),
         },
         
         # Sync document storage - run every hour
         "sync-storage": {
-            "task": "infrastructure.tasks.backup_tasks.sync_document_storage",
+            "task": "scripts.infrastructure.tasks.backup_tasks.sync_document_storage",
             "schedule": crontab(minute=0),
         },
     },

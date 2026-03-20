@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 try:
-    from agniassist.security import verify_token
+    from core.ai_security import verify_token
 except ModuleNotFoundError:
     from security import verify_token
 
@@ -37,7 +37,7 @@ async def summarize_text(
     user: dict = Depends(verify_token)
 ):
     """Summarize text using Generative AI"""
-    from agniassist.services.genai_service import genai_service
+    from services.genai_service import genai_service
     
     if not request.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
@@ -63,7 +63,7 @@ async def extract_entities(
     user: dict = Depends(verify_token)
 ):
     """Extract named entities from text"""
-    from agniassist.services.nlp_service import nlp_service
+    from services.nlp_service import nlp_service
     
     try:
         result = await nlp_service.extract_entities(text)
@@ -78,7 +78,7 @@ async def analyze_text_sentiment(
     user: dict = Depends(verify_token)
 ):
     """Analyze sentiment of text"""
-    from agniassist.services.nlp_service import nlp_service
+    from services.nlp_service import nlp_service
     
     try:
         result = await nlp_service.analyze_sentiment(text)
@@ -94,7 +94,7 @@ async def extract_text_keywords(
     user: dict = Depends(verify_token)
 ):
     """Extract keywords from text"""
-    from agniassist.services.nlp_service import nlp_service
+    from services.nlp_service import nlp_service
     
     try:
         keywords = await nlp_service.extract_keywords(text, top_n)

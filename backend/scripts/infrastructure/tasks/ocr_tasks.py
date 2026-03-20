@@ -3,7 +3,7 @@ OCR Background Tasks
 Agniveer Sentinel - Enterprise Production
 """
 
-from infrastructure.celery_config import celery_app, BaseTask
+from core.celery_config import celery_app, BaseTask
 from celery import chain, group
 import asyncio
 

@@ -3,7 +3,7 @@ Backup and Maintenance Tasks
 Agniveer Sentinel - Enterprise Production
 """
 
-from infrastructure.celery_config import celery_app, BaseTask
+from core.celery_config import celery_app, BaseTask
 import asyncio
 import os
 import shutil

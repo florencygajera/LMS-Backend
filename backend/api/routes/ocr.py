@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 try:
-    from agniassist.security import verify_token
+    from core.ai_security import verify_token
 except ModuleNotFoundError:
     from security import verify_token
 
@@ -30,7 +30,7 @@ async def process_ocr(
     user: dict = Depends(verify_token)
 ):
     """Process image and extract text using OCR"""
-    from agniassist.services.ocr_service import ocr_service
+    from services.ocr_service import ocr_service
     
     # Validate file type
     allowed_types = {"image/png", "image/jpeg", "image/jpg", "image/tiff", "image/bmp"}
@@ -65,7 +65,7 @@ async def extract_entities(
     user: dict = Depends(verify_token)
 ):
     """Extract entities from OCR text"""
-    from agniassist.services.nlp_service import nlp_service
+    from services.nlp_service import nlp_service
     
     try:
         result = await nlp_service.extract_entities(text)

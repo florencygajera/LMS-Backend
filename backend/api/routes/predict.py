@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 
 try:
-    from agniassist.security import verify_token
+    from core.ai_security import verify_token
 except ModuleNotFoundError:
     from security import verify_token
 
@@ -44,7 +44,7 @@ async def predict_performance(
     user: dict = Depends(verify_token)
 ):
     """Predict soldier performance risk"""
-    from agniassist.services.ml_service import ml_service
+    from services.ml_service import ml_service
     
     try:
         features = request.dict()
@@ -61,7 +61,7 @@ async def train_model(
     user: dict = Depends(verify_token)
 ):
     """Train ML model with new data"""
-    from agniassist.services.ml_service import ml_service
+    from services.ml_service import ml_service
     
     try:
         result = await ml_service.train_model(request.training_data)
@@ -85,7 +85,7 @@ async def get_model_status(
     user: dict = Depends(verify_token)
 ):
     """Get ML model status"""
-    from agniassist.services.ml_service import ml_service
+    from services.ml_service import ml_service
     
     return {
         "is_trained": ml_service.is_trained,

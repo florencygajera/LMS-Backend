@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 try:
-    from agniassist.security import verify_token
+    from core.ai_security import verify_token
 except ModuleNotFoundError:
     from security import verify_token
 
@@ -32,7 +32,7 @@ async def ask_question(
     user: dict = Depends(verify_token)
 ):
     """Ask a question to the RAG chatbot"""
-    from agniassist.services.rag_service import rag_service
+    from services.rag_service import rag_service
     
     if not request.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty")
@@ -61,7 +61,7 @@ async def add_document(
     user: dict = Depends(verify_token)
 ):
     """Add a document to the knowledge base"""
-    from agniassist.services.rag_service import rag_service
+    from services.rag_service import rag_service
     
     try:
         await rag_service.add_document(title, content, category)
