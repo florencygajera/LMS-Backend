@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from typing import AsyncGenerator
 
-from sqlalchemy import Column, DateTime
+from sqlalchemy import Column, DateTime, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -141,11 +141,47 @@ async def _create_tables() -> None:
         await conn.run_sync(Base.metadata.create_all)
 
 
+async def _test_connection(database_url: str) -> bool:
+    """
+    Test if we can connect to the database.
+    Returns True if connection successful, False otherwise.
+    """
+    is_sqlite = database_url.startswith("sqlite")
+    if is_sqlite:
+        # SQLite doesn't need connection test, just check file exists or is creatable
+        return True
+    
+    try:
+        engine = _build_engine(database_url)
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        await engine.dispose()
+        logger.info(f"[DB Connection Test] Successfully connected to {database_url[:30]}...")
+        return True
+    except Exception as e:
+        logger.warning(f"[DB Connection Test] Failed to connect to {database_url[:30]}...: {e}")
+        return False
+
+
 async def init_db() -> str:
     """
     Initialize DB and create tables.
     Falls back to SQLite when primary database is unavailable.
     """
+    current_url = get_database_url()
+    
+    # First, test the connection before trying to create tables
+    logger.info(f"[DB Init] Testing connection to: {current_url[:50]}...")
+    
+    if not current_url.startswith("sqlite"):
+        # Try PostgreSQL connection first
+        connection_ok = await _test_connection(current_url)
+        if not connection_ok:
+            logger.warning("[DB Init] PostgreSQL connection failed, falling back to SQLite...")
+            sqlite_url = "sqlite+aiosqlite:///./agniveer.db"
+            set_database_url(sqlite_url)
+            current_url = sqlite_url
+    
     try:
         await _create_tables()
         return get_database_url()

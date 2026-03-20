@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )
     
     # App Configuration
-    APP_NAME: str = "Agniveer Sentinel"
+    APP_NAME: str = "Agniveer "
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
     API_V1_PREFIX: str = "/api/v1"
