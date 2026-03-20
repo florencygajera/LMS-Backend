@@ -30,6 +30,14 @@ from schemas.user import (
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
+def _as_utc(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
 @router.get("/")
 async def auth_service_test():
     return {"message": "auth service working"}
@@ -115,7 +123,8 @@ async def login(
         )
     
     # Check if account is locked
-    if user.locked_until and user.locked_until > datetime.now(timezone.utc):
+    locked_until = _as_utc(user.locked_until)
+    if locked_until and locked_until > datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is locked. Please try again later."
@@ -185,7 +194,8 @@ async def refresh_token(payload: RefreshTokenRequest, db: AsyncSession = Depends
     )
     stored_token = result.scalar_one_or_none()
     
-    if not stored_token or stored_token.expires_at < datetime.now(timezone.utc):
+    expires_at = _as_utc(stored_token.expires_at) if stored_token else None
+    if not stored_token or not expires_at or expires_at < datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token expired or revoked"

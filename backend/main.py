@@ -89,47 +89,9 @@ async def lifespan(app: FastAPI):
     logger.info("Agniveer Sentinel starting")
     active_db_url = await init_db()
     logger.info("Database initialized using %s", active_db_url)
-    
-    # Initialize AgniAssist AI services
-    logger.info("Initializing AI Services...")
-    
-    # Initialize RAG Service
-    try:
-        from services.rag_service import rag_service
-        await rag_service.initialize()
-        logger.info("? RAG Service initialized")
-    except Exception as e:
-        logger.warning(f"RAG Service init warning: {e}")
-    
-    # Initialize ML Service
-    try:
-        from services.ml_service import ml_service
-        ml_service.initialize()
-        logger.info("? ML Service initialized")
-    except Exception as e:
-        logger.warning(f"ML Service init warning: {e}")
-    
-    # OCR, NLP, and GenAI services initialize themselves at import time
-    # Just verify they're importable
-    try:
-        from services.ocr_service import ocr_service
-        logger.info("? OCR Service loaded")
-    except Exception as e:
-        logger.warning(f"OCR Service init warning: {e}")
-    
-    try:
-        from services.nlp_service import nlp_service
-        logger.info("? NLP Service loaded")
-    except Exception as e:
-        logger.warning(f"NLP Service init warning: {e}")
-    
-    try:
-        from services.genai_service import genai_service
-        logger.info("? GenAI Service loaded")
-    except Exception as e:
-        logger.warning(f"GenAI Service init warning: {e}")
-    
-    logger.info("?? All AI Services Ready")
+
+    # Keep startup non-blocking; AI services initialize lazily on first use.
+    logger.info("AI services are configured for lazy initialization")
     
     yield
     
@@ -353,7 +315,6 @@ if __name__ == "__main__":
             port = int(sys.argv[idx + 1])
     
     uvicorn.run("main:app", host="127.0.0.1", port=port, reload=True)
-
 
 
 
