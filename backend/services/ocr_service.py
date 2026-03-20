@@ -31,7 +31,7 @@ class OCRService:
         # Try PaddleOCR first
         try:
             from paddleocr import PaddleOCR
-            self.paddle_ocr = PaddleOCR(use_angle_cls=True, lang='en', show_log=False)
+            self.paddle_ocr = PaddleOCR(use_angle_cls=True, lang='en')
             logger.info("✅ PaddleOCR loaded")
             self.ocr_type = "paddle"
         except ImportError:
