@@ -147,9 +147,43 @@ SERVICE_ROUTERS = [
     (ai_summarize_router, f"{API_PREFIX}/ai", "AI - Summarization"),
 ]
 
+
+OPENAPI_REQUIRED_PREFIXES = [
+    f"{API_PREFIX}/auth",
+    f"{API_PREFIX}/documents",
+    f"{API_PREFIX}/ml",
+    f"{API_PREFIX}/notifications",
+    f"{API_PREFIX}/recruitment",
+    f"{API_PREFIX}/reports",
+    f"{API_PREFIX}/soldier",
+    f"{API_PREFIX}/training",
+    f"{API_PREFIX}/weather",
+]
+
+
+def _missing_required_api_prefixes(fastapi_app: FastAPI) -> list[str]:
+    registered_paths = {
+        route.path for route in fastapi_app.routes if getattr(route, "methods", None)
+    }
+    return [
+        prefix
+        for prefix in OPENAPI_REQUIRED_PREFIXES
+        if not any(path.startswith(prefix) for path in registered_paths)
+    ]
+
+
 for router, prefix, tag in SERVICE_ROUTERS:
     app.include_router(router, prefix=prefix, tags=[tag])
     logger.info("Loaded %s router at %s", tag, prefix)
+
+missing_prefixes = _missing_required_api_prefixes(app)
+if missing_prefixes:
+    message = (
+        "OpenAPI router registration is incomplete. Missing API prefixes: "
+        + ", ".join(sorted(missing_prefixes))
+    )
+    logger.error(message)
+    raise RuntimeError(message)
 
 
 @app.on_event("startup")
