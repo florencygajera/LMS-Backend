@@ -11,8 +11,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from common.core.config import settings
-from common.core.database import get_db
+from core.config import settings
+from core.database import get_db
 
 
 # Password hashing context
@@ -202,3 +202,5 @@ ROLE_PERMISSIONS = {
         Permission.TAKE_EXAM, Permission.VIEW_RESULTS
     ]
 }
+
+

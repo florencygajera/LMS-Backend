@@ -26,3 +26,5 @@ def test_application_verification_accepts_valid_payload():
     )
 
     assert payload.recruitment_batch == "2026-A"
+
+

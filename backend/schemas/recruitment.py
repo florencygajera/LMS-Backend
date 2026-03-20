@@ -6,7 +6,7 @@ Agniveer Sentinel - Phase 1: Recruitment System
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime, date
-from common.models.base import ApplicationStatus
+from models.base import ApplicationStatus
 
 
 # Candidate Schemas
@@ -200,3 +200,5 @@ class ApplicationStatusResponse(BaseModel):
     application_status: ApplicationStatus
     admit_card: Optional[AdmitCardResponse]
     exam_registration: Optional[ExamRegistrationResponse]
+
+

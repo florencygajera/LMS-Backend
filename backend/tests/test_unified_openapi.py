@@ -17,3 +17,5 @@ def test_unified_openapi_includes_all_required_service_prefixes() -> None:
         "Unified OpenAPI docs are missing service endpoints for prefixes: "
         + ", ".join(sorted(missing_prefixes))
     )
+
+

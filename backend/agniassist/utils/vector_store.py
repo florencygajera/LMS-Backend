@@ -111,3 +111,5 @@ class VectorStore:
 
 # Singleton instance
 vector_store = VectorStore()
+
+

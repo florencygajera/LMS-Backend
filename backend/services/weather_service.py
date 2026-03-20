@@ -6,7 +6,7 @@ Agniveer Sentinel - Weather Integration & Training Adjustment
 import httpx
 from typing import Dict, Any, Optional
 from datetime import datetime
-from common.core.config import settings
+from core.config import settings
 
 
 class WeatherService:
@@ -213,3 +213,5 @@ class WeatherService:
 
 # Singleton instance
 weather_service = WeatherService()
+
+

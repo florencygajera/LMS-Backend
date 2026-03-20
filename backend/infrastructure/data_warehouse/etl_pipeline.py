@@ -223,3 +223,5 @@ class AnalyticsService:
         df = pd.read_sql(query, engine)
         
         return df.to_dict(orient='records')
+
+

@@ -120,3 +120,5 @@ class BaseTask(celery_app.Task):
     def on_success(self, retval, task_id, args, kwargs):
         """Called when task succeeds"""
         print(f"Task {task_id} succeeded: {retval}")
+
+

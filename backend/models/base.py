@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 import enum
-from common.core.database import Base
+from core.database import Base
 
 
 class UserRole(str, enum.Enum):
@@ -77,3 +77,5 @@ class UserBase(BaseModel):
     is_verified = Column(Boolean, default=False, nullable=False)
     phone_number = Column(String(20), nullable=True)
     profile_photo_url = Column(String(500), nullable=True)
+
+

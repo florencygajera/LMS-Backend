@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from services.soldier_service.models.soldier import Soldier, TrainingRecord
-from common.models.base import TrainingType
+from models.base import TrainingType
 
 
 class ExcelTrainingProcessor:
@@ -207,3 +207,5 @@ class ExcelTrainingProcessor:
 
 # Singleton instance
 excel_processor = ExcelTrainingProcessor()
+
+

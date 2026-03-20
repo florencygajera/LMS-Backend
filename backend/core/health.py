@@ -12,7 +12,7 @@ import redis
 import os
 from datetime import datetime
 
-from common.core.database import get_db
+from core.database import get_db
 
 router = APIRouter()
 
@@ -174,3 +174,5 @@ async def metrics_endpoint():
             "response_time_p95": 0,
         }
     }
+
+

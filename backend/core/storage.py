@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 import boto3
 
-from common.core.config import settings
+from core.config import settings
 
 
 class ObjectStorage:
@@ -55,3 +55,5 @@ class ObjectStorage:
 
 
 storage = ObjectStorage()
+
+

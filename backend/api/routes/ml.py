@@ -10,7 +10,7 @@ from datetime import date
 import pandas as pd
 import numpy as np
 
-from common.core.security import get_current_user
+from core.security import get_current_user
 from services.auth_service.models.user import User
 from services.ml_service.models.performance_prediction import (
     performance_model, injury_risk_model
@@ -248,3 +248,5 @@ async def analyze_medical_risk(
             "Ensure adequate sleep"
         ]
     }
+
+

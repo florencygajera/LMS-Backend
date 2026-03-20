@@ -91,3 +91,5 @@ async def get_model_status(
         "is_trained": ml_service.is_trained,
         "model_available": ml_service.model is not None
     }
+
+

@@ -6,7 +6,7 @@ Agniveer Sentinel - Phase 2: Soldier Management LMS
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime, date
-from common.models.base import TrainingType, PaymentStatus
+from models.base import TrainingType, PaymentStatus
 
 
 # Soldier Schemas
@@ -299,3 +299,5 @@ class SOSAlertResponse(BaseModel):
     battalion_id: Optional[int]
     
     model_config = ConfigDict(from_attributes=True)
+
+

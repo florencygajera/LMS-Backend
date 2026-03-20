@@ -201,3 +201,5 @@ class NLPService:
 
 # Singleton instance
 nlp_service = NLPService()
+
+

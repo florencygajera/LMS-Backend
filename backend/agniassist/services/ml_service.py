@@ -232,3 +232,5 @@ class MLService:
 
 # Singleton instance
 ml_service = MLService()
+
+

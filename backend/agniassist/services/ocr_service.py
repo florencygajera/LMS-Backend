@@ -207,3 +207,5 @@ class OCRService:
 
 # Singleton instance
 ocr_service = OCRService()
+
+

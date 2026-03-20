@@ -175,3 +175,5 @@ ROTATION_POLICY = """
 
 # Singleton instance
 secrets_manager = SecretsManager()
+
+

@@ -31,3 +31,5 @@ async def test_notify_soldier_supports_notification_type():
     await service.notify_soldier(1, "Alert", "Body", "warning")
 
     assert socket.messages[-1]["notification_type"] == "warning"
+
+

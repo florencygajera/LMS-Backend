@@ -6,7 +6,7 @@ Agniveer Sentinel - Soldier Management LMS
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime, date
-from common.models.base import TrainingType
+from models.base import TrainingType
 
 
 class TrainingRecordBase(BaseModel):
@@ -70,3 +70,5 @@ class BattalionStatsResponse(BaseModel):
     battalion_name: str
     total_soldiers: int
     soldier_stats: List[dict]
+
+

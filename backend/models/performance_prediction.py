@@ -255,3 +255,5 @@ class InjuryRiskModel:
 # Singleton instances
 performance_model = PerformancePredictionModel()
 injury_risk_model = InjuryRiskModel()
+
+

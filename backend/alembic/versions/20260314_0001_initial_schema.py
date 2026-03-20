@@ -2,7 +2,7 @@
 
 from alembic import op
 
-from common.core.database import Base, import_models
+from core.database import Base, import_models
 
 
 revision = "20260314_0001"
@@ -21,3 +21,5 @@ def downgrade() -> None:
     import_models()
     bind = op.get_bind()
     Base.metadata.drop_all(bind=bind)
+
+

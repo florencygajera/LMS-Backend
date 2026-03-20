@@ -10,13 +10,13 @@ from sqlalchemy import select
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from common.core.database import get_db
-from common.core.security import (
+from core.database import get_db
+from core.security import (
     get_password_hash, verify_password, 
     create_access_token, create_refresh_token, decode_token,
     get_current_user, RoleChecker
 )
-from common.models.base import UserRole
+from models.base import UserRole
 from services.auth_service.models.user import User, RefreshToken, AuditLog
 from services.auth_service.schemas.user import (
     UserCreate, UserResponse, UserUpdate, UserLogin, Token,
@@ -309,3 +309,5 @@ async def change_password(
 
 # Role-based access control
 admin_only = RoleChecker([UserRole.SUPER_ADMIN, UserRole.ADMIN])
+
+

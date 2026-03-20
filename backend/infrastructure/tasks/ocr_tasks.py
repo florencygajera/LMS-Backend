@@ -7,7 +7,7 @@ from infrastructure.celery_config import celery_app, BaseTask
 from celery import chain, group
 import asyncio
 
-from common.core.storage import storage
+from core.storage import storage
 
 
 @celery_app.task(base=BaseTask, bind=True, max_retries=3)
@@ -106,3 +106,5 @@ def extract_profile_data(self, document_id: int, soldier_id: int = None):
     
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(_extract())
+
+

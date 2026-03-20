@@ -11,10 +11,10 @@ from typing import Optional
 from datetime import date, datetime
 import io
 
-from common.core.database import get_db
-from common.core.authorization import can_access_soldier_profile
-from common.core.security import get_current_user
-from common.models.base import UserRole
+from core.database import get_db
+from core.authorization import can_access_soldier_profile
+from core.security import get_current_user
+from models.base import UserRole
 from services.auth_service.models.user import User
 from services.soldier_service.models.soldier import Soldier, TrainingRecord, MedicalRecord, Stipend
 from services.report_service.services.report_generator import pdf_generator
@@ -315,3 +315,5 @@ async def generate_stipend_report(
             "Content-Disposition": f"attachment; filename=stipend_report_{soldier.soldier_id}_{year}.pdf"
         }
     )
+
+

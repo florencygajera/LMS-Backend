@@ -9,11 +9,11 @@ from sqlalchemy import select, desc
 from typing import Optional
 from datetime import date, datetime
 
-from common.core.database import get_db
-from common.core.audit import log_security_event
-from common.core.authorization import trainer_required
-from common.core.security import get_current_user
-from common.models.base import UserRole, TrainingType
+from core.database import get_db
+from core.audit import log_security_event
+from core.authorization import trainer_required
+from core.security import get_current_user
+from models.base import UserRole, TrainingType
 from services.auth_service.models.user import User
 from services.soldier_service.models.soldier import Soldier, TrainingRecord, Battalion
 from services.training_service.services.excel_processor import excel_processor
@@ -319,3 +319,5 @@ async def get_battalion_training_stats(
     battalion_stats["soldier_stats"].sort(key=lambda x: x["avg_score"], reverse=True)
     
     return battalion_stats
+
+

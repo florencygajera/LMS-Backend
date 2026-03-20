@@ -68,3 +68,5 @@ async def add_document(
         return {"success": True, "message": f"Document '{title}' added successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+

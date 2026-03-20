@@ -187,3 +187,5 @@ def process_training_excel(self, file_path: str, trainer_id: int):
     
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(_process())
+
+

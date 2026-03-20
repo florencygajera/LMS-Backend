@@ -6,8 +6,8 @@ Agniveer Sentinel - Phase 1: Recruitment System
 from sqlalchemy import Column, Integer, String, DateTime, Date, Enum, Boolean, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime, date
-from common.core.database import Base
-from common.models.base import BaseModel, ApplicationStatus
+from core.database import Base
+from models.base import BaseModel, ApplicationStatus
 
 
 # Candidate Model
@@ -262,3 +262,5 @@ class AdmitCard(BaseModel):
     
     def __repr__(self):
         return f"<AdmitCard(id={self.id}, admit_card_number={self.admit_card_number})>"
+
+

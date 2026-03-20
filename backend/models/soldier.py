@@ -6,8 +6,8 @@ Agniveer Sentinel - Phase 2: Soldier Management LMS
 from sqlalchemy import Column, Integer, String, DateTime, Date, Enum, Boolean, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime, date, time
-from common.core.database import Base
-from common.models.base import BaseModel, TrainingType, PaymentStatus
+from core.database import Base
+from models.base import BaseModel, TrainingType, PaymentStatus
 
 
 # Soldier Model
@@ -379,3 +379,5 @@ class SOSAlert(BaseModel):
     
     def __repr__(self):
         return f"<SOSAlert(id={self.id}, triggered_at={self.triggered_at})>"
+
+

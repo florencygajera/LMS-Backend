@@ -1,4 +1,3 @@
-﻿-- Active: 1773896361863@@127.0.0.1@3306
 """Agniveer unified API entrypoint."""
 
 from __future__ import annotations
@@ -18,21 +17,21 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from backend.api.routes.ocr import router as ai_ocr_router
-from backend.api.routes.predict import router as ai_predict_router
-from backend.api.routes.rag import router as ai_rag_router
-from backend.api.routes.summarize import router as ai_summarize_router
-from backend.core.config import settings
-from backend.core.database import get_database_url, init_db
-from backend.api.routes.auth import router as auth_router
-from backend.api.routes.documents import router as documents_router
-from backend.api.routes.ml import router as ml_router
-from backend.api.routes.notifications import router as notifications_router
-from backend.api.routes.recruitment import router as recruitment_router
-from backend.api.routes.reports import router as reports_router
-from backend.api.routes.soldier import router as soldier_router
-from backend.api.routes.training import router as training_router
-from backend.api.routes.weather import router as weather_router
+from api.routes.ocr import router as ai_ocr_router
+from api.routes.predict import router as ai_predict_router
+from api.routes.rag import router as ai_rag_router
+from api.routes.summarize import router as ai_summarize_router
+from core.config import settings
+from core.database import get_database_url, init_db
+from api.routes.auth import router as auth_router
+from api.routes.documents import router as documents_router
+from api.routes.ml import router as ml_router
+from api.routes.notifications import router as notifications_router
+from api.routes.recruitment import router as recruitment_router
+from api.routes.reports import router as reports_router
+from api.routes.soldier import router as soldier_router
+from api.routes.training import router as training_router
+from api.routes.weather import router as weather_router
 
 
 logging.basicConfig(
@@ -96,41 +95,41 @@ async def lifespan(app: FastAPI):
     
     # Initialize RAG Service
     try:
-        from backend.services.rag_service import rag_service
+        from services.rag_service import rag_service
         await rag_service.initialize()
-        logger.info("✅ RAG Service initialized")
+        logger.info("? RAG Service initialized")
     except Exception as e:
         logger.warning(f"RAG Service init warning: {e}")
     
     # Initialize ML Service
     try:
-        from backend.services.ml_service import ml_service
+        from services.ml_service import ml_service
         ml_service.initialize()
-        logger.info("✅ ML Service initialized")
+        logger.info("? ML Service initialized")
     except Exception as e:
         logger.warning(f"ML Service init warning: {e}")
     
     # OCR, NLP, and GenAI services initialize themselves at import time
     # Just verify they're importable
     try:
-        from backend.services.ocr_service import ocr_service
-        logger.info("✅ OCR Service loaded")
+        from services.ocr_service import ocr_service
+        logger.info("? OCR Service loaded")
     except Exception as e:
         logger.warning(f"OCR Service init warning: {e}")
     
     try:
-        from backend.services.nlp_service import nlp_service
-        logger.info("✅ NLP Service loaded")
+        from services.nlp_service import nlp_service
+        logger.info("? NLP Service loaded")
     except Exception as e:
         logger.warning(f"NLP Service init warning: {e}")
     
     try:
-        from backend.services.genai_service import genai_service
-        logger.info("✅ GenAI Service loaded")
+        from services.genai_service import genai_service
+        logger.info("? GenAI Service loaded")
     except Exception as e:
         logger.warning(f"GenAI Service init warning: {e}")
     
-    logger.info("🎯 All AI Services Ready")
+    logger.info("?? All AI Services Ready")
     
     yield
     
@@ -345,3 +344,5 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+
+

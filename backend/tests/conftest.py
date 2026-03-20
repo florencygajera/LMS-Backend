@@ -12,7 +12,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.sql.elements import BinaryExpression
 
-from common.core.database import get_db, import_models
+from core.database import get_db, import_models
 from services.auth_service.models.user import AuditLog, RefreshToken, User
 
 
@@ -156,3 +156,5 @@ def sample_training_data():
         "endurance_score": 85.0,
         "bmi": 22.5,
     }
+
+

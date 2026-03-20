@@ -6,7 +6,7 @@ Agniveer Sentinel - Enterprise Production
 import pytest
 from httpx import AsyncClient
 
-from common.models.base import TrainingType
+from models.base import TrainingType
 from services.soldier_service.api.endpoints.soldier import generate_soldier_id
 from services.soldier_service.schemas.soldier import MedicalRecordCreate
 from services.training_service.schemas.training import TrainingRecordCreate
@@ -56,3 +56,5 @@ async def test_training_record_creation():
         pushups_count=60,
     )
     assert record.pushups_count == 60
+
+

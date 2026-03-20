@@ -6,7 +6,7 @@ Agniveer Sentinel - Auth Service
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
-from common.models.base import UserRole
+from models.base import UserRole
 
 
 # User Schemas
@@ -95,3 +95,5 @@ class AuditLogResponse(BaseModel):
     status: str
     
     model_config = ConfigDict(from_attributes=True)
+
+

@@ -6,8 +6,8 @@ Agniveer Sentinel - Auth Service
 from sqlalchemy import Column, Integer, String, DateTime, Enum, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from common.core.database import Base
-from common.models.base import UserRole, BaseModel
+from core.database import Base
+from models.base import UserRole, BaseModel
 
 
 class User(BaseModel):
@@ -75,3 +75,5 @@ class RefreshToken(BaseModel):
     
     def __repr__(self):
         return f"<RefreshToken(id={self.id}, user_id={self.user_id}, is_revoked={self.is_revoked})>"
+
+

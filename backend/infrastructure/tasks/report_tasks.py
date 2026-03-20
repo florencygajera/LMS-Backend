@@ -268,3 +268,5 @@ def generate_monthly_report(self, soldier_id: int, month: int, year: int):
     
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(_generate())
+
+

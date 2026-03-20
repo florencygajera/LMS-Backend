@@ -64,3 +64,5 @@ class EmbeddingsGenerator:
 
 # Singleton instance
 embeddings_generator = EmbeddingsGenerator()
+
+

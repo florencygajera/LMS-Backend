@@ -323,3 +323,5 @@ class PDFReportGenerator:
 
 # Singleton instance
 pdf_generator = PDFReportGenerator()
+
+

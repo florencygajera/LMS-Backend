@@ -226,3 +226,5 @@ async def warm_cache():
     # Pre-load frequently accessed data into cache
     print("Warming up cache...")
     # Implementation would query database and cache popular data
+
+

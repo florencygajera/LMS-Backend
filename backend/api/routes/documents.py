@@ -4,7 +4,7 @@ Document service API endpoints.
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
-from common.core.authorization import admin_required
+from core.authorization import admin_required
 from services.auth_service.models.user import User
 from services.document_service.services.ocr_service import ocr_service
 
@@ -34,3 +34,5 @@ async def process_document_ocr(
     if not result["success"]:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=result["error"])
     return result
+
+

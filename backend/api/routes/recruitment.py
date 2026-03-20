@@ -12,12 +12,12 @@ import uuid
 import random
 import string
 
-from common.core.database import get_db
-from common.core.audit import log_security_event
-from common.core.authorization import admin_required
-from common.core.security import get_current_user
-from common.core.storage import storage
-from common.models.base import UserRole, ApplicationStatus
+from core.database import get_db
+from core.audit import log_security_event
+from core.authorization import admin_required
+from core.security import get_current_user
+from core.storage import storage
+from models.base import UserRole, ApplicationStatus
 from services.auth_service.models.user import User
 from services.recruitment_service.models.recruitment import (
     Candidate, CandidateDocument, Application, ExamCenter, Exam,
@@ -492,3 +492,5 @@ async def verify_application(
     await db.commit()
     
     return {"message": "Application verified", "overall_eligible": application.overall_eligible}
+
+

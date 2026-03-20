@@ -35,3 +35,5 @@ async def log_security_event(
     db.add(audit_entry)
     await db.flush()
     return audit_entry
+
+

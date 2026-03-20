@@ -11,7 +11,7 @@ from sqlalchemy import Column, DateTime, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-from backend.core.config import settings
+from core.config import settings
 
 
 logger = logging.getLogger(__name__)
@@ -92,8 +92,8 @@ class TimestampMixin:
 
 def import_models() -> None:
     """Import SQLAlchemy models so they are registered in Base metadata."""
-    from backend.models.user import AuditLog, RefreshToken, User  # noqa: F401
-    from backend.models.recruitment import (  # noqa: F401
+    from models.user import AuditLog, RefreshToken, User  # noqa: F401
+    from models.recruitment import (  # noqa: F401
         AdmitCard,
         Application,
         Candidate,
@@ -103,7 +103,7 @@ def import_models() -> None:
         ExamQuestion,
         ExamRegistration,
     )
-    from backend.models.soldier import (  # noqa: F401
+    from models.soldier import (  # noqa: F401
         Battalion,
         BattalionPosting,
         DailySchedule,
@@ -210,3 +210,5 @@ def __getattr__(name):
     if name == "AsyncSessionLocal":
         return get_async_session_local()
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+

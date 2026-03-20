@@ -202,3 +202,5 @@ class GenAIService:
 
 # Singleton instance
 genai_service = GenAIService()
+
+
