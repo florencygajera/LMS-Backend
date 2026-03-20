@@ -314,7 +314,7 @@ if __name__ == "__main__":
         if len(sys.argv) > idx + 1:
             port = int(sys.argv[idx + 1])
     
-    uvicorn.run("main:app", host="127.0.0.1", port=port, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8001, reload=True)
 
 
 
