@@ -1,4 +1,5 @@
-﻿"""Agniveer unified API entrypoint."""
+﻿-- Active: 1773896361863@@127.0.0.1@3306
+"""Agniveer unified API entrypoint."""
 
 from __future__ import annotations
 
@@ -17,21 +18,21 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from agniassist.routers.ocr import router as ai_ocr_router
-from agniassist.routers.predict import router as ai_predict_router
-from agniassist.routers.rag import router as ai_rag_router
-from agniassist.routers.summarize import router as ai_summarize_router
-from common.core.config import settings
-from common.core.database import get_database_url, init_db
-from services.auth_service.api.endpoints.auth import router as auth_router
-from services.document_service.api.endpoints.documents import router as documents_router
-from services.ml_service.api.endpoints.ml import router as ml_router
-from services.notification_service.api.endpoints.notifications import ( router as notifications_router, )
-from services.recruitment_service.api.endpoints.recruitment import (router as recruitment_router,)
-from services.report_service.api.endpoints.reports import router as reports_router
-from services.soldier_service.api.endpoints.soldier import router as soldier_router
-from services.training_service.api.endpoints.training import router as training_router
-from services.weather_service.api.endpoints.weather import router as weather_router
+from backend.api.routes.ocr import router as ai_ocr_router
+from backend.api.routes.predict import router as ai_predict_router
+from backend.api.routes.rag import router as ai_rag_router
+from backend.api.routes.summarize import router as ai_summarize_router
+from backend.core.config import settings
+from backend.core.database import get_database_url, init_db
+from backend.api.routes.auth import router as auth_router
+from backend.api.routes.documents import router as documents_router
+from backend.api.routes.ml import router as ml_router
+from backend.api.routes.notifications import router as notifications_router
+from backend.api.routes.recruitment import router as recruitment_router
+from backend.api.routes.reports import router as reports_router
+from backend.api.routes.soldier import router as soldier_router
+from backend.api.routes.training import router as training_router
+from backend.api.routes.weather import router as weather_router
 
 
 logging.basicConfig(
@@ -95,7 +96,7 @@ async def lifespan(app: FastAPI):
     
     # Initialize RAG Service
     try:
-        from agniassist.services.rag_service import rag_service
+        from backend.services.rag_service import rag_service
         await rag_service.initialize()
         logger.info("✅ RAG Service initialized")
     except Exception as e:
@@ -103,7 +104,7 @@ async def lifespan(app: FastAPI):
     
     # Initialize ML Service
     try:
-        from agniassist.services.ml_service import ml_service
+        from backend.services.ml_service import ml_service
         ml_service.initialize()
         logger.info("✅ ML Service initialized")
     except Exception as e:
@@ -112,19 +113,19 @@ async def lifespan(app: FastAPI):
     # OCR, NLP, and GenAI services initialize themselves at import time
     # Just verify they're importable
     try:
-        from agniassist.services.ocr_service import ocr_service
+        from backend.services.ocr_service import ocr_service
         logger.info("✅ OCR Service loaded")
     except Exception as e:
         logger.warning(f"OCR Service init warning: {e}")
     
     try:
-        from agniassist.services.nlp_service import nlp_service
+        from backend.services.nlp_service import nlp_service
         logger.info("✅ NLP Service loaded")
     except Exception as e:
         logger.warning(f"NLP Service init warning: {e}")
     
     try:
-        from agniassist.services.genai_service import genai_service
+        from backend.services.genai_service import genai_service
         logger.info("✅ GenAI Service loaded")
     except Exception as e:
         logger.warning(f"GenAI Service init warning: {e}")
