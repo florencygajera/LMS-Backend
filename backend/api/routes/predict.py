@@ -49,8 +49,13 @@ async def predict_performance(
     try:
         features = request.dict()
         result = await ml_service.predict_risk(features)
-        
+
+        if not result.get("success", False):
+            raise HTTPException(status_code=400, detail=result.get("error", "Prediction failed"))
+
         return PredictionResponse(**result)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
