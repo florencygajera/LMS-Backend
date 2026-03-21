@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 
 from api.routes.ocr import router as ai_ocr_router
 from api.routes.predict import router as ai_predict_router
-from api.routes.rag import router as ai_rag_router
+from agniassist.routes import router as agniassist_router
 from api.routes.summarize import router as ai_summarize_router
 from core.config import settings
 from core.database import get_database_url, init_db
@@ -187,7 +187,7 @@ SERVICE_ROUTERS = [
     (ml_router, f"{API_PREFIX}/ml", "ML Service"),
     (documents_router, f"{API_PREFIX}/documents", "Document Service"),
     (weather_router, f"{API_PREFIX}/weather", "Weather Service"),
-    (ai_rag_router, f"{API_PREFIX}/ai", "AI - RAG"),
+    (agniassist_router, "/agniassist", "AgniAssist Unified AI"),
     (ai_ocr_router, f"{API_PREFIX}/ai", "AI - OCR"),
     (ai_predict_router, f"{API_PREFIX}/ai", "AI - Prediction"),
     (ai_summarize_router, f"{API_PREFIX}/ai", "AI - Summarization"),
