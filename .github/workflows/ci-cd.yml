@@ -4,22 +4,38 @@
 name: CI/CD Pipeline
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Target environment for manual deploy'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
   pull_request:
     branches: [develop, main]
   push:
     branches: [develop, main]
+    paths:
+      - 'backend/**'
+      - 'docker-compose.yml'
+      - 'nginx.conf'
+      - 'infrastructure/**'
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # ─────────────────────────────────────────
   # Run tests
+  # ─────────────────────────────────────────
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     services:
       postgres:
         image: postgres:15
@@ -33,7 +49,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-      
+
       redis:
         image: redis:7
         options: >-
@@ -43,31 +59,35 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
-    
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
           python-version: '3.11'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install flake8
+          # FIX: Run pip check after full install so dependency graph is complete
           python -m pip check
-      
-      - name: Compile all python files
+
+      - name: Compile all Python files
         run: |
-          cd backend && python -m compileall -q api core models schemas services tests agniassist
+          # FIX: Compile entire backend tree so newly added packages aren't skipped
+          cd backend && python -m compileall -q .
 
       - name: Run linter
         run: |
-          cd backend && python -m flake8 api core models schemas services tests agniassist --jobs 1 --count --select=E9,F63,F7,F82 --show-source --statistics
-      
+          # FIX: Removed --jobs 1 to allow flake8 to parallelise across cores
+          cd backend && python -m flake8 api core models schemas services tests agniassist \
+            --count --select=E9,F63,F7,F82 --show-source --statistics
+
       - name: Run tests
         env:
           DEBUG: "false"
@@ -80,30 +100,85 @@ jobs:
           REDIS_HOST: localhost
           REDIS_PORT: 6379
         run: |
-          cd backend && python -m pytest tests/ --ignore=../tests -v --cov=services --cov-report=xml -k "not test_unified_openapi"
-      
+          cd backend && python -m pytest tests/ --ignore=../tests -v \
+            --cov=services --cov-report=xml -k "not test_unified_openapi"
+
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
-          files: ./coverage.xml
+          # FIX: Corrected path — pytest runs from backend/, so coverage.xml lands there
+          files: ./backend/coverage.xml
           fail_ci_if_error: false
 
-  # Build Docker images
+  # ─────────────────────────────────────────
+  # Build & push Docker images
+  # ─────────────────────────────────────────
   build:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     timeout-minutes: 20
 
+    # Expose the image tag so deploy jobs can reference the exact build
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Validate docker-compose configuration
         run: docker compose -f docker-compose.yml config -q
 
+      # FIX: Log in to GHCR so images can actually be pushed
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # FIX: Generate a deterministic tag (short SHA) for traceability
+      - name: Generate image tag
+        id: meta
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "image_tag=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
       - name: Build service images
         run: |
-          docker compose build auth-service recruitment-service soldier-service document-service training-service report-service notification-service ml-service weather-service
+          docker compose build \
+            auth-service \
+            recruitment-service \
+            soldier-service \
+            document-service \
+            training-service \
+            report-service \
+            notification-service \
+            ml-service \
+            weather-service
+
+      # FIX: Tag each image with the commit SHA and push to GHCR
+      - name: Tag and push service images
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
+        run: |
+          SERVICES=(
+            auth-service
+            recruitment-service
+            soldier-service
+            document-service
+            training-service
+            report-service
+            notification-service
+            ml-service
+            weather-service
+          )
+          for svc in "${SERVICES[@]}"; do
+            docker tag "$svc" "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${svc}:${IMAGE_TAG}"
+            docker tag "$svc" "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${svc}:latest"
+            docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${svc}:${IMAGE_TAG}"
+            docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${svc}:latest"
+          done
 
       - name: Ensure required deployment files exist
         run: |
@@ -111,34 +186,57 @@ jobs:
           test -f nginx.conf
           test -f infrastructure/k8s/Chart.yaml
 
+  # ─────────────────────────────────────────
   # Deploy to staging
+  # ─────────────────────────────────────────
   deploy-staging:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/develop'
     environment: development
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Deploy to Staging
-        run: |
-          echo "Deploying to staging environment..."
-          # Would use kubectl or docker-compose to deploy
-          # Example: kubectl apply -f k8s/staging/
+    # NOTE: Configure "Required reviewers" in GitHub → Settings → Environments
+    # → development if you want an approval gate here too.
 
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Deploy to Staging
+        env:
+          IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
+          # TODO: Add secrets for your staging cluster credentials, e.g.:
+          # KUBE_CONFIG: ${{ secrets.STAGING_KUBE_CONFIG }}
+        run: |
+          echo "Deploying image tag ${IMAGE_TAG} to staging..."
+          # TODO: Wire up real deployment — examples:
+          # kubectl apply -f infrastructure/k8s/staging/
+          # helm upgrade --install agniveer ./infrastructure/k8s \
+          #   --set image.tag="${IMAGE_TAG}" \
+          #   --namespace staging
+
+  # ─────────────────────────────────────────
   # Deploy to production
+  # ─────────────────────────────────────────
   deploy-production:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     environment: production
-    
+    # ⚠️  IMPORTANT: Go to GitHub → Settings → Environments → production
+    # and add "Required reviewers" to enforce a human approval gate
+    # before this job runs. The workflow will pause and wait for approval.
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
       - name: Deploy to Production
+        env:
+          IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
+          # TODO: Add secrets for your production cluster credentials, e.g.:
+          # KUBE_CONFIG: ${{ secrets.PROD_KUBE_CONFIG }}
         run: |
-          echo "Deploying to production environment..."
-          # Would use kubectl or docker-compose to deploy
-          # Would require approval for production deployments
+          echo "Deploying image tag ${IMAGE_TAG} to production..."
+          # TODO: Wire up real deployment — examples:
+          # kubectl apply -f infrastructure/k8s/production/
+          # helm upgrade --install agniveer ./infrastructure/k8s \
+          #   --set image.tag="${IMAGE_TAG}" \
+          #   --namespace production
