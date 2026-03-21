@@ -5,10 +5,10 @@ import logging
 
 try:
     from core.database import get_db
-    from security import verify_token
+    from core.ai_security import verify_token
 except ModuleNotFoundError:
     from core.database import get_db
-    from core.security import verify_token
+    from security import verify_token
 
 from models.user import AuditLog
 from .services.rag_service import rag_service
@@ -30,12 +30,10 @@ class AskResponse(BaseModel):
 async def ask_agniassist(
     request: AskRequest,
     req: Request,
-    user: dict = None,
+    user: dict = Depends(verify_token),
     db: AsyncSession = Depends(get_db)
 ):
     try:
-        # JWT validation (Dependency can be explicitly assigned)
-        verify_t = verify_token
         
         if not request.query.strip():
             raise HTTPException(status_code=400, detail="Query cannot be empty")
