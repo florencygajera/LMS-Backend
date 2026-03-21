@@ -1,6 +1,6 @@
 """Regression checks for unified OpenAPI documentation."""
 
-from main import OPENAPI_REQUIRED_PREFIXES, app
+from backend.main import OPENAPI_REQUIRED_PREFIXES, app
 
 
 def test_unified_openapi_includes_all_required_service_prefixes() -> None:
