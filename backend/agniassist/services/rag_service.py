@@ -1,3 +1,4 @@
+# Core RAG Service
 import os
 import faiss
 import numpy as np
