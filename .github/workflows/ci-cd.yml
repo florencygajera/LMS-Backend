@@ -73,19 +73,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python -m pip install flake8
+          python -m pip install flake8 pytest pytest-cov
           # FIX: Run pip check after full install so dependency graph is complete
           python -m pip check
 
       - name: Compile all Python files
         run: |
           # FIX: Compile entire backend tree so newly added packages aren't skipped
-          cd backend && python -m compileall -q .
+          cd backend && PYTHONPATH=. python -m compileall -q .
 
       - name: Run linter
         run: |
           # FIX: Removed --jobs 1 to allow flake8 to parallelise across cores
-          cd backend && python -m flake8 api core models schemas services tests agniassist \
+          cd backend && PYTHONPATH=. python -m flake8 api core models schemas services tests agniassist \
             --count --select=E9,F63,F7,F82 --show-source --statistics
 
       - name: Run tests
@@ -100,7 +100,7 @@ jobs:
           REDIS_HOST: localhost
           REDIS_PORT: 6379
         run: |
-          cd backend && python -m pytest tests/ --ignore=../tests -v \
+          cd backend && PYTHONPATH=. python -m pytest tests/ --ignore=../tests -v \
             --cov=services --cov-report=xml -k "not test_unified_openapi"
 
       - name: Upload coverage
