@@ -145,32 +145,10 @@ def _envelope_payload(payload: Any, message: str = "Request successful") -> dict
 
 @app.middleware("http")
 async def standard_response_middleware(request: Request, call_next):
-    response = await call_next(request)
-
-    if not request.url.path.startswith(API_PREFIX):
-        return response
-        
-    # Standard OAuth2 token payloads must rarely be enveloped
-    if request.url.path.endswith("/login") or request.url.path.endswith("/refresh"):
-        return response
-
-    if response.status_code >= 400:
-        return response
-    media_type = response.media_type or response.headers.get("content-type", "")
-    if "application/json" not in media_type:
-        return response
-
-    body = b""
-    async for chunk in response.body_iterator:
-        body += chunk
-    if not body:
-        return response
-
-    payload = json.loads(body.decode("utf-8"))
-    wrapped = _envelope_payload(payload)
-    headers = dict(response.headers)
-    headers.pop("content-length", None)
-    return JSONResponse(status_code=response.status_code, content=wrapped, headers=headers)
+    # Completely disabled the JSON enveloping wrapper here. 
+    # It was wrapping native Pydantic responses in a {"data": ...} envelope and breaking 
+    # frontend architectures looking for top-level keys.
+    return await call_next(request)
 
 
 # ============================================================================
