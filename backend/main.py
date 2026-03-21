@@ -149,6 +149,11 @@ async def standard_response_middleware(request: Request, call_next):
 
     if not request.url.path.startswith(API_PREFIX):
         return response
+        
+    # Standard OAuth2 token payloads must rarely be enveloped
+    if request.url.path.endswith("/login") or request.url.path.endswith("/refresh"):
+        return response
+
     if response.status_code >= 400:
         return response
     media_type = response.media_type or response.headers.get("content-type", "")
