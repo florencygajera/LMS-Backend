@@ -33,9 +33,13 @@ class RAGService:
         distances, indices = self.index.search(query_vector, top_k)
         
         retrieved_texts = []
+        seen = set()
         for idx in indices[0]:
             if idx != -1 and idx in self.doc_map:
-                retrieved_texts.append(self.doc_map[idx])
+                text = self.doc_map[idx]
+                if text not in seen:
+                    seen.add(text)
+                    retrieved_texts.append(text)
                 
         return "\n\n".join(retrieved_texts)
 

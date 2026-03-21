@@ -15,8 +15,9 @@ class LLMService:
         if TRANSFORMERS_AVAILABLE:
             try:
                 # Fully standalone inside the python memory heap.
-                # 'google/flan-t5-small' is an offline instruction-tuned model. No servers. No APIs.
-                model_name = "google/flan-t5-small"
+                # 'google/flan-t5-base' (1GB RAM) offers massively improved factual extraction 
+                # over the extremely weak 'small' tier without requiring Ollama servers.
+                model_name = "google/flan-t5-base"
                 logger.info(f"Loading local isolated in-memory model: {model_name}...")
                 
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -26,7 +27,7 @@ class LLMService:
                     "text2text-generation",
                     model=self.model,
                     tokenizer=self.tokenizer,
-                    max_length=512,
+                    max_length=1024,
                     truncation=True
                 )
                 logger.info("Local In-Memory Generation Model Successfully Booted.")
@@ -42,16 +43,27 @@ class LLMService:
             if len(prompt.split()) > 1024:
                 prompt = " ".join(prompt.split()[:1024])
                 
-            # Execute inference isolated natively on the local CPU/GPU footprint
+            # Execute inference safely isolated natively on the local footprint
             result = self.generator(
                 prompt,
-                max_length=200,
-                min_length=10,
+                max_new_tokens=40,
+                min_length=1,
                 do_sample=False,
+                repetition_penalty=1.8,
+                early_stopping=True,
                 truncation=True
             )
             
-            return result[0].get('generated_text', "System could not assemble a response.")
+            raw_answer = result[0].get('generated_text', "System could not assemble a response.")
+            
+            # Post-Process: Brutally kill T5 hallucination loops by severing text if it repeats context tags
+            cleaned = raw_answer.split("[BATTALION]")[0].split("[EXAM]")[0].split("[TRAINING")[0].strip()
+            
+            # If the model fails strictly based on constraints:
+            if not cleaned or cleaned.isspace():
+                return "The exact numerical or factual answer isn't clearly accessible currently."
+            
+            return cleaned
             
         except Exception as e:
             logger.error(f"Isolated Generation Pipeline failed: {e}")
