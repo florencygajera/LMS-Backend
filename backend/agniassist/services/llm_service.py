@@ -46,8 +46,8 @@ class LLMService:
             # Execute inference safely isolated natively on the local footprint
             result = self.generator(
                 prompt,
-                max_new_tokens=40,
-                min_length=1,
+                max_new_tokens=150,
+                min_length=15,
                 do_sample=False,
                 repetition_penalty=1.8,
                 early_stopping=True,
